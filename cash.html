@@ -175,6 +175,14 @@
     #content{flex:0 0 auto; overflow-y:visible;}
     #abar{max-height:none; overflow-y:visible; position:static; padding-bottom:24px;}
   }
+
+  /* ===== スマホ:回答バーの高さ拡大+選択肢のコンパクト化(3択以上対策) ===== */
+  @media (max-width: 699px){
+    #abar{max-height:62vh; max-height:62dvh; gap:6px; overscroll-behavior:contain;}
+    #abar .opt{padding:9px 12px; font-size:.85rem; line-height:1.5;}
+    .abar-note{font-size:.72rem;}
+    #abar .nextbtn{padding:11px;}
+  }
 </style>
 </head>
 <body>
@@ -1630,7 +1638,7 @@ const GROUP_LIST=[["pre","プリフロップ(100bb)"],["outs","アウツ&勝率"
 const groupOf=n=>n.startsWith("nash-")?"nash":n;
 const groupLabel=n=>(GROUP_LIST.find(g=>g[0]===groupOf(n))||["","その他"])[1];
 
-const state={mode:"mix", chartSpot:"sb10", cfix:"pos", cpos:"SB", cstk:10, rating:1200, xp:0, streak:0, answered:0,
+const state={mode:"mix", chartSpot:"sb10", cfix:"pos", cpos:"SB", cstk:10, cview:"range", rating:1200, xp:0, streak:0, answered:0,
   counts:{best:0,ok:0,miss:0,blunder:0}, priority:[], lastIdx:-1, current:-1, locked:false};
 
 function mastery(node){
@@ -1820,10 +1828,36 @@ function gridRawHTML(rangeStr, label, action){
 function chartGrid(){
   return gridRawHTML(OPEN_RANGES[state.cpos].r, `${state.cpos} オープンレイズ(100bb)`, "オープン");
 }
+
+// --- 表タブ:レンジ表+早見表のセレクタ ---
+const TABLE_VIEWS=[["range","🃏 レンジ表"],["outs","アウツ"],["req","必要勝率"],["bluff","ブラフ&MDF"],["match","マッチアップ"]];
+const TABLE_NOTES={range:"",outs:"ドローの種類→アウツ数→勝率の対応。ルールオブ4と2(アウツ×4=2枚、×2=1枚)の実体。",req:"相手のベットサイズ→コールに必要な勝率。全コール判断の土台。",bluff:"自分のブラフの損益分岐フォールド率と、守る側の最低防御頻度(MDF)。",match:"プリフロップオールインの代表的な対決の勝率。型ごと覚える。"};
+function chartTabsHTML(){
+  return `<div class="spot-sel">${TABLE_VIEWS.map(([k,v])=>`<button class="cat ${state.cview===k?"active":""}" data-cv="${k}">${v}</button>`).join("")}</div>`;
+}
+function bindChartTabs(root){
+  root.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{state.cview=b.dataset.cv; renderChartView();});
+}
+function renderTableView(){
+  el("abar").innerHTML="";
+  el("content").innerHTML=`
+    <div class="qmeta"><span class="tag">早見表</span></div>
+    ${chartTabsHTML()}
+    <div class="rdesc">${TABLE_NOTES[state.cview]||""}</div>
+    <div class="k-wrap">${KT[state.cview]()}</div>`;
+  bindChartTabs(el("content"));
+  el("content").scrollTop=0;
+}
 function renderChartView(){
+  if(state.cview!=="range"){ renderTableView(); return; }
+  renderRangeView();
+}
+
+function renderRangeView(){
   el("abar").innerHTML="";
   el("content").innerHTML=`
     <div class="qmeta"><span class="tag">オープンレンジ表(キャッシュ100bb・簡略目安)</span></div>
+    ${chartTabsHTML()}
     <div class="spot-sel">${POS_ORDER.map(p=>`<button class="cat ${p===state.cpos?"active":""}" data-p="${p}">${p}</button>`).join("")}</div>
     <div class="rdesc" id="cdesc">${OPEN_RANGES[state.cpos].d} ポジションを切り替えて、参加できる手の増え方を観察してください。</div>
     <div id="cgrid">${chartGrid()}</div>

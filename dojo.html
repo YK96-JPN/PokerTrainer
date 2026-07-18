@@ -175,6 +175,14 @@
     #content{flex:0 0 auto; overflow-y:visible;}
     #abar{max-height:none; overflow-y:visible; position:static; padding-bottom:24px;}
   }
+
+  /* ===== スマホ:回答バーの高さ拡大+選択肢のコンパクト化(3択以上対策) ===== */
+  @media (max-width: 699px){
+    #abar{max-height:62vh; max-height:62dvh; gap:6px; overscroll-behavior:contain;}
+    #abar .opt{padding:9px 12px; font-size:.85rem; line-height:1.5;}
+    .abar-note{font-size:.72rem;}
+    #abar .nextbtn{padding:11px;}
+  }
 </style>
 </head>
 <body>
@@ -729,7 +737,7 @@ function knowledgeHTML(text, kind){
     allHands.push(i===j? RANKS[i]+RANKS[j] : (i<j? RANKS[i]+RANKS[j]+"s" : RANKS[j]+RANKS[i]+"o"));
 
   const SPOTS=[
-    {id:"utg10", pos:"UTG", pl:"9人", stk:"10bb"},
+    {id:"utg10", pos:"UTG", pl:"9人", stk:"10bb", act:"あなたが最初のアクション(前に誰も参加していない)"},
     {id:"hj10",  pos:"HJ",  pl:"9人", stk:"10bb"},
     {id:"co10",  pos:"CO",  pl:"9人", stk:"10bb"},
     {id:"btn10", pos:"BTN(ボタン)", pl:"8人", stk:"10bb"},
@@ -749,7 +757,7 @@ function knowledgeHTML(text, kind){
     const edgeIn  = allHands.filter(h=>set.has(h) && weaker(h)!=null && !set.has(weaker(h)));
     const edgeOut = allHands.filter(h=>!set.has(h) && stronger(h)!=null && set.has(stronger(h)));
     const isCall = sp.id==="bbcall";
-    const act = isCall ? "SB(10bb・熟練者)がオールイン" : "全員フォールドで回ってきた";
+    const act = isCall ? "SB(10bb・熟練者)がオールイン" : (sp.act || "全員フォールドで回ってきた");
     const doLbl = isCall ? "コール" : "オールイン";
     const make=(h,inRange)=>{
       seed++;
@@ -924,16 +932,16 @@ const CARDS = [
 {d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】HJ\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nQ8o は?", two:1,
  o:[{t:"フォールド",ok:1},{t:"オールイン"}],
  e:"後ろに5人いるとQ8oは範囲外。同じ手がSBならプッシュになる——境界はポジションで動く。"},
-{d:"nash", q:"【UTG・9人・10bb】\n88 は?", two:1,
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】UTG\n【スタック】10bb\n【状況】あなたが最初のアクション\n88 は?", two:1,
  o:[{t:"オールイン",ok:1},{t:"フォールド"}],
  e:"UTGの狭いレンジでも中ペア以上は確実にプッシュ。88はど真ん中。"},
-{d:"nash", q:"【UTG・9人・10bb】\nAQo は?", two:1,
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】UTG\n【スタック】10bb\n【状況】あなたが最初のアクション\nAQo は?", two:1,
  o:[{t:"オールイン",ok:1},{t:"フォールド"}],
  e:"AQo/AJs級の強いエースはUTGからでもプッシュ。コールされても大差では負けにくい。"},
-{d:"nash", q:"【UTG・9人・10bb】\nKTo は?", two:1,
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】UTG\n【スタック】10bb\n【状況】あなたが最初のアクション\nKTo は?", two:1,
  o:[{t:"フォールド",ok:1},{t:"オールイン"}],
  e:"後ろ8人ではKToは範囲外(ボタンならプッシュ)。「UTGは狭い」を具体的なハンドで覚える。"},
-{d:"nash", q:"【UTG・9人・10bb】\n87s は?", two:1,
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】UTG\n【スタック】10bb\n【状況】あなたが最初のアクション\n87s は?", two:1,
  o:[{t:"フォールド",ok:1},{t:"オールイン"}],
  e:"スーテッドコネクターはプッシュ向きではない(コールされた時に負けすぎる)。プッシュはハイカード/ペア優先。"},
 {d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】BB\n【スタック】相手をカバー\n【状況】SB(10bb・熟練者)がナッシュ通りの広さでオールイン。\nATo でのコールは?", two:1,
@@ -1483,7 +1491,7 @@ const GROUP_LIST=[["outs","アウツ&勝率"],["odds","オッズ判断"],["bluff
 const groupOf=n=>n.startsWith("nash-")?"nash":n;
 const groupLabel=n=>(GROUP_LIST.find(g=>g[0]===groupOf(n))||["","その他"])[1];
 
-const state={mode:"mix", chartSpot:"sb10", cfix:"pos", cpos:"SB", cstk:10, rating:1200, xp:0, streak:0, answered:0,
+const state={mode:"mix", chartSpot:"sb10", cfix:"pos", cpos:"SB", cstk:10, cview:"range", rating:1200, xp:0, streak:0, answered:0,
   counts:{best:0,ok:0,miss:0,blunder:0}, priority:[], lastIdx:-1, current:-1, locked:false};
 
 function mastery(node){
@@ -1687,11 +1695,37 @@ function chartGrid(){
   const action=RANGES2[state.cpos].act||"プッシュ";
   return gridRawHTML(r, `${state.cpos} ${state.cstk}bb`, action);
 }
+
+// --- 表タブ:レンジ表+早見表のセレクタ ---
+const TABLE_VIEWS=[["range","🃏 レンジ表"],["outs","アウツ"],["req","必要勝率"],["bluff","ブラフ&MDF"],["match","マッチアップ"],["bubble","バブル方針"],["open","オープン目安"]];
+const TABLE_NOTES={range:"",outs:"ドローの種類→アウツ数→勝率の対応。ルールオブ4と2(アウツ×4=2枚、×2=1枚)の実体。",req:"相手のベットサイズ→コールに必要な勝率。全コール判断の土台。",bluff:"自分のブラフの損益分岐フォールド率と、守る側の最低防御頻度(MDF)。",match:"プリフロップオールインの代表的な対決の勝率。型ごと覚える。",bubble:"バブルでのスタック別方針。同じ状況でも立場で正解が反転する。",open:"ポジション別のオープン参加率の目安(40bb+・9人)。"};
+function chartTabsHTML(){
+  return `<div class="spot-sel">${TABLE_VIEWS.map(([k,v])=>`<button class="cat ${state.cview===k?"active":""}" data-cv="${k}">${v}</button>`).join("")}</div>`;
+}
+function bindChartTabs(root){
+  root.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{state.cview=b.dataset.cv; renderChartView();});
+}
+function renderTableView(){
+  el("abar").innerHTML="";
+  el("content").innerHTML=`
+    <div class="qmeta"><span class="tag">早見表</span></div>
+    ${chartTabsHTML()}
+    <div class="rdesc">${TABLE_NOTES[state.cview]||""}</div>
+    <div class="k-wrap">${KT[state.cview]()}</div>`;
+  bindChartTabs(el("content"));
+  el("content").scrollTop=0;
+}
 function renderChartView(){
+  if(state.cview!=="range"){ renderTableView(); return; }
+  renderRangeView();
+}
+
+function renderRangeView(){
   el("abar").innerHTML="";
   const fixedPos = state.cfix==="pos";
   el("content").innerHTML=`
     <div class="qmeta"><span class="tag">レンジ表エクスプローラ(簡略ナッシュ近似)</span></div>
+    ${chartTabsHTML()}
     <div class="spot-sel">
       <button class="cat ${fixedPos?"active":""}" data-tg="pos">ポジションを固定</button>
       <button class="cat ${!fixedPos?"active":""}" data-tg="stack">スタックを固定</button>
@@ -1709,6 +1743,7 @@ function renderChartView(){
     <div id="cgrid">${chartGrid()}</div>
     <div class="rnote">大原則:①スタックが浅いほど広がる ②後ろに残る人数が少ないほど広がる ③コールはプッシュよりずっと狭い。<br>この表は暗記用の簡略近似(±1〜2ハンド許容)。正確なナッシュ表はHoldemResources Calculator、SnapShove、GTO Wizard(無料枠)で確認できます。</div>`;
   const c=el("content");
+  bindChartTabs(c);
   c.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{state.cfix=b.dataset.tg; renderChartView();});
   c.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.cpos=b.dataset.p; renderChartView();});
   c.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{state.cstk=+b.dataset.s; renderChartView();});
