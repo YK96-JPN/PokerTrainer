@@ -1,52 +1,16 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f1720">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
-<title>ポーカー道場</title>
-<style>
-  :root{--bg:#0f1720; --panel:#1a2532; --line:#2e415a; --text:#e8eef5; --muted:#8fa3b8; --gold:#f2c14e;}
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif; background:var(--bg); color:var(--text);
-    min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:32px 16px;}
-  h1{font-size:1.5rem; margin-bottom:6px;}
-  .sub{color:var(--muted); font-size:.85rem; margin-bottom:28px;}
-  .cards{display:flex; flex-direction:column; gap:14px; width:100%; max-width:480px;}
-  a.appcard{display:block; text-decoration:none; border-radius:16px; padding:22px 20px; border:1px solid var(--line);}
-  a.dojo{background:linear-gradient(135deg,#16342a,#1e4d3a);}
-  a.cash{background:linear-gradient(135deg,#3a161f,#5a1f2b);}
-  .appcard .t{font-size:1.15rem; font-weight:bold; color:var(--text); margin-bottom:6px;}
-  .appcard .d{font-size:.8rem; color:#cfd9e3; line-height:1.7;}
-  .appcard .n{font-size:.72rem; color:var(--gold); margin-top:10px;}
-  .install{margin-top:30px; max-width:480px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; font-size:.78rem; color:var(--muted); line-height:1.8;}
-  .install b{color:var(--gold);}
-</style>
-</head>
-<body>
-  <h1>♠ ポーカー道場 ♦</h1>
-  <div class="sub">知識×判断のアダプティブ学習アプリ</div>
-  <div class="cards">
-    <a class="appcard dojo" href="./dojo.html">
-      <div class="t">♠ 特訓道場(トーナメント)</div>
-      <div class="d">序盤ディープ〜終盤プッシュ/フォールド〜バブル・ICMまで。何切る判断+暗記カード+レンジ表エクスプローラ。</div>
-      <div class="n">255アイテム収録</div>
-    </a>
-    <a class="appcard cash" href="./cash.html">
-      <div class="t">♦ キャッシュ道場(ライブキャッシュ)</div>
-      <div class="d">100bbのプリフロップ&ポストフロップ、テル&ライブ読み、実務ルール。オープンレンジ表つき。</div>
-      <div class="n">125アイテム収録</div>
-    </a>
-  </div>
-  <div class="install">
-    <b>📲 アプリとしてインストール:</b> Android Chromeなら右上メニュー →「ホーム画面に追加」(または「アプリをインストール」)。ホーム画面のアイコンから全画面で起動し、オフラインでも動作します。進捗は端末に自動保存されます。
-  </div>
-<script>
-if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-  addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+{
+  "name": "ポーカー道場",
+  "short_name": "ポーカー道場",
+  "description": "トーナメント&ライブキャッシュのポーカー学習アプリ(何切る判断+暗記ドリル+レンジ表)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1720",
+  "theme_color": "#0f1720",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }
-</script>
-</body>
-</html>

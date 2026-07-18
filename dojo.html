@@ -2,17 +2,17 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#1a0d11">
+<meta name="theme-color" content="#0f1720">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ライブキャッシュ道場 v1</title>
+<title>ポーカー特訓道場 v2.1(モバイル最適化)</title>
 <style>
   :root{
-    --bg:#1a0d11; --panel:#26131a; --panel2:#331a22; --line:#573039;
-    --text:#e8eef5; --muted:#8fa3b8; --accent:#e0526b; --gold:#f2c14e;
+    --bg:#0f1720; --panel:#1a2532; --panel2:#223144; --line:#2e415a;
+    --text:#e8eef5; --muted:#8fa3b8; --accent:#3ecf8e; --gold:#f2c14e;
     --best:#3ecf8e; --ok:#5aa9e6; --miss:#f2a05d; --blunder:#e5636c;
-    --felt:#5a1f2b;
+    --felt:#1e4d3a;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   html{height:100%;}
@@ -38,7 +38,7 @@
     background:var(--panel); border:1px solid var(--line); color:var(--muted);
     border-radius:999px; padding:6px 12px; font-size:.78rem; cursor:pointer;
   }
-  .cat.active{background:var(--accent); color:#2b0d13; border-color:var(--accent); font-weight:bold;}
+  .cat.active{background:var(--accent); color:#08281a; border-color:var(--accent); font-weight:bold;}
   .qcard{
     background:var(--panel); border:1px solid var(--line); border-radius:14px;
     padding:16px; margin-bottom:14px;
@@ -52,7 +52,7 @@
     background:var(--felt); border-radius:10px; padding:12px 14px; margin-bottom:12px;
     font-size:.86rem; line-height:1.75;
   }
-  .situ .lbl{color:#e0aab5; font-size:.72rem;}
+  .situ .lbl{color:#a8d5be; font-size:.72rem;}
   .cards-row{display:flex; align-items:center; gap:12px; margin:10px 0 4px; flex-wrap:wrap;}
   .cards-lbl{font-size:.78rem; color:#f2c14e; min-width:5.5em; font-weight:bold;}
   .srow{display:flex; gap:4px; align-items:baseline;}
@@ -64,7 +64,7 @@
   }
   .card .suit{font-size:.95rem;}
   .suit-s{color:#1b1b1b;} .suit-h{color:#d0342c;} .suit-d{color:#2065c9;} .suit-c{color:#1e7d3c;}
-  .noboard{color:#e0aab5; font-size:.8rem; font-style:italic;}
+  .noboard{color:#a8d5be; font-size:.8rem; font-style:italic;}
   .qask{font-size:.9rem; font-weight:bold; margin:12px 0 10px; color:var(--gold);}
   .opts{display:flex; flex-direction:column; gap:8px;}
   .opt{
@@ -96,7 +96,7 @@
   }
   .fb-pr b{color:var(--gold);}
   .nextbtn{
-    width:100%; background:var(--accent); color:#2b0d13; font-weight:bold; font-size:.95rem;
+    width:100%; background:var(--accent); color:#08281a; font-weight:bold; font-size:.95rem;
     border:none; border-radius:10px; padding:13px; cursor:pointer;
   }
   .nextbtn:hover{filter:brightness(1.08);}
@@ -128,7 +128,7 @@
   .q-gloss b{color:var(--accent);}
   .rgrid{display:grid; grid-template-columns:repeat(13,1fr); gap:2px; margin-top:10px;}
   .rc{aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:.53rem; border-radius:3px; background:var(--panel2); color:var(--muted); overflow:hidden;}
-  .rc.on{background:var(--accent); color:#2b0d13; font-weight:bold;}
+  .rc.on{background:var(--accent); color:#08281a; font-weight:bold;}
   .rc.pair{border:1px solid var(--line);}
   .k-wrap{margin-bottom:12px;}
   .kt-title{font-size:.78rem; color:var(--gold); font-weight:bold; margin:8px 0 6px;}
@@ -156,7 +156,7 @@
   .opts-grid2 .opt{flex:1; text-align:center;}
   .opt.correct.revealed{border-color:var(--best); opacity:1; background:rgba(62,207,142,.12);}
   .opt.pickedwrong{border-color:var(--blunder); opacity:1; background:rgba(229,99,108,.12);}
-  .vs-lbl{color:#e0aab5; font-size:.85rem; font-weight:bold; margin:0 4px;}
+  .vs-lbl{color:#a8d5be; font-size:.85rem; font-weight:bold; margin:0 4px;}
   .spot-sel{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
   .rnote{font-size:.72rem; color:var(--muted); line-height:1.7; margin-top:12px;}
   .rdesc{font-size:.84rem; line-height:1.7; background:var(--felt); border-radius:10px; padding:12px 14px; margin-bottom:4px;}
@@ -180,7 +180,7 @@
 <body>
 <div class="app">
   <header>
-    <h1>♦ キャッシュ道場<small>ライブキャッシュ特化 v1</small></h1>
+    <h1>♠ ポーカー特訓道場<small>知識×判断 v2.1</small></h1>
     <div class="chips">
       <div class="chip">レート <b id="rating">1200</b></div>
       <div class="chip">XP <b id="xp">0</b></div>
@@ -1360,7 +1360,7 @@ const EARLY_SCENARIOS=[
  metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"150bb",act:"MP(あなたと同等の深さ)が3bbにレイズ。あなたに回ってきた"},
  situ:[], hero:["4c","4d"], board:[],
  opts:[{label:"コール(セットマイン)",grade:"best",note:"ディープ最強の投資"},{label:"3ベット",grade:"miss",note:"小ペアの良さを自分で消す"},{label:"フォールド",grade:"miss",note:"採算の合う投資を見送っている"}],
- exp:"3bbの投資で、約12%で引くセットが相手の150bbを丸ごと狙えます——これがディープ限定の「セットマイン」の採算構造です。目安は『レイズ額の15〜20倍の残スタックがあるか』で、150bbなら余裕でクリア。浅いスタックなら「レイズかフォールド」の手が、ディープではコール一択級になる——スタックの深さが手の価値を変えるからです。",
+ exp:"3bbの投資で、約12%で引くセットが相手の150bbを丸ごと狙えます——これがディープ限定の「セットマイン」の採算構造です。目安は『レイズ額の15〜20倍の残スタックがあるか』で、150bbなら余裕でクリア。40bb時代に学んだ「22はレイズ寄り」と逆の答えになるのは、スタックの深さが手の価値を変えるからです。",
  pr:"セットマインの採算=相手のスタック÷参加費。深いほど小ペアの価値は上がる。"},
 {cat:"early", level:2, title:"オーバーリンプの例外",
  metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"120bb",act:"前に3人がリンプ(コール参加)。あなたに回ってきた"},
@@ -1378,9 +1378,9 @@ const EARLY_SCENARIOS=[
  metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"CO",stk:"180bb",act:"あなたのCベットに相手がチェックレイズ。コールしたところ、ターンで相手がさらに大きなベット(この流れは全額に発展しそう)"},
  situ:[], hero:["As","Kh"], board:["Kd","9c","5h","2d"],
  opts:[{label:"フォールド",grade:"best",note:"ワンペアは中ポットまでの手"},{label:"コール",grade:"miss",note:"どこかで止まれなくなる"},{label:"レイズ",grade:"blunder",note:"セット以上に全額進呈"}],
- exp:"これが序盤に飛ぶ人の典型パターンの正反対です。SPRが高いディープでは、TPTKですら「中サイズのポットまでの手」で、180bbが全部入る展開はセット・ツーペア以上の世界。相手が2度も大きく打ってくるラインに対し、ワンペアで付き合い続ける理由がありません。浅いスタック(トーナメント終盤など)の「トップペアはコミット」と正反対なのは、SPRが違うからです。",
- pr:"大きなポットには大きな手。ディープのワンペアでスタックを賭けない——キャッシュ生存の第一条。"},
-{cat:"early", level:1, title:"参加はレイズから",
+ exp:"これが序盤に飛ぶ人の典型パターンの正反対です。SPRが高いディープでは、TPTKですら「中サイズのポットまでの手」で、180bbが全部入る展開はセット・ツーペア以上の世界。相手が2度も大きく打ってくるラインに対し、ワンペアで付き合い続ける理由がありません。終盤(14bb)で学んだ「トップペアはコミット」と正反対なのは、SPRが違うからです。",
+ pr:"大きなポットには大きな手。ディープのワンペアでスタックを賭けない——序盤生存の第一条。"},
+{cat:"early", level:1, title:"序盤でも参加はレイズから",
  metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"CO",stk:"180bb",act:"全員フォールドであなたに回ってきた"},
  situ:[], hero:["7d","6d"], board:[],
  opts:[{label:"レイズ(2.5bb)",grade:"best",note:"参加の仕方は序盤も同じ"},{label:"リンプ(オープンリンプ)",grade:"miss",note:"先頭からのリンプは序盤でも非推奨"},{label:"フォールド",grade:"ok",note:"タイトな判断としては許容"}],
@@ -1390,7 +1390,7 @@ const EARLY_SCENARIOS=[
  metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"160bb",act:"引き締まったUTGが3bbにレイズ、MPがコール。あなたに回ってきた"},
  situ:[], hero:["Kc","Qh"], board:[],
  opts:[{label:"フォールド",grade:"best",note:"見た目より分の悪い勝負"},{label:"コール",grade:"miss",note:"ドミネートされる側での参戦"},{label:"3ベット",grade:"miss",note:"降ろせない相手に張っている"}],
- exp:"KQoは浅いスタックなら喜んでプッシュする手ですが、ディープのUTGレイズ+コーラーありの場面では、AK・AQ・KK・QQといった「KQを支配する手」だらけのレンジに向かって、オフスートの凡庸なプレイアビリティで挑むことになります。ポジションがあっても、当たった時に2番手になりやすい構図は変わりません。この見送りが積み重なって序盤の生存率を作ります。",
+ exp:"KQoは終盤なら喜んでプッシュする手ですが、ディープのUTGレイズ+コーラーありの場面では、AK・AQ・KK・QQといった「KQを支配する手」だらけのレンジに向かって、オフスートの凡庸なプレイアビリティで挑むことになります。ポジションがあっても、当たった時に2番手になりやすい構図は変わりません。この見送りが積み重なって序盤の生存率を作ります。",
  pr:"手の強さは文脈で決まる。終盤のプッシュ候補が序盤のフォールド候補になり得る。"},
 {cat:"early", level:2, title:"ナッツ級は育てる",
  metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BB",stk:"140bb",act:"3人ポット。フロップであなたはナッツストレートが完成。COがベットしてきた"},
@@ -1398,11 +1398,11 @@ const EARLY_SCENARIOS=[
  opts:[{label:"レイズ(3倍)",grade:"best",note:"大きなポットを作れる手が来た"},{label:"コールのみ",grade:"miss",note:"ポットが育たず逆転リスクも放置"},{label:"ミニレイズ",grade:"ok",note:"方向は正しいがサイズ不足"}],
  exp:"『大きなポットには大きな手』の攻め側です。ナッツストレートはまさに140bbを入れにいける手で、相手がベットしてくれた今がポットを育てる最良の機会。マルチウェイでツーペアやセットが相手にいる可能性も高く、彼らから最大限取るためにも、逆転ドローを追い出すためにも、しっかりレイズします。序盤の生存戦略は「大きく張らない」ではなく「張る手を選ぶ」ことです。",
  pr:"生存戦略=選別であって萎縮ではない。ナッツ級が来たらディープでも最大限育てる。"},
-{cat:"early", level:1, title:"AAは常に全部入れる",
+{cat:"early", level:1, title:"AAは序盤でも全部入れる",
  metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"200bb",act:"あなたのレイズにSBが3ベット。あなたの4ベットに、SBが5ベットオールイン(200bb)"},
  situ:[], hero:["Ac","Ad"], board:[],
  opts:[{label:"コール",grade:"best",note:"生存戦略はAAを降りることではない"},{label:"フォールド",grade:"blunder",note:"「序盤だから」の誤った拡大適用"}],
- exp:"「ディープでは大きなポットを避ける」はワンペアで*なってしまう*大ポットを避ける話であって、プリフロップのAAという「常に最有利で全額入れられる唯一の手」まで避ける話ではありません。5ベットオールインのレンジ(KK/QQ/AK中心)に対してAAは約85%。これを避けて得られる「生存」に価値はありません。選別を過剰学習して勝負弱くなるのが、この段階の最後の落とし穴です。",
+ exp:"「序盤は大きなポットを避ける」はワンペアで*なってしまう*大ポットを避ける話であって、プリフロップのAAという「常に最有利で全額入れられる唯一の手」まで避ける話ではありません。5ベットオールインのレンジ(KK/QQ/AK中心)に対してAAは約85%。これを避けて得られる「生存」に価値はありません。生存戦略を過剰学習して勝負弱くなるのが、この段階の最後の落とし穴です。",
  pr:"選別の結論がGOなら躊躇しない。序盤のAAプリフロップオールインは常にコール。"}
 ];
 SCENARIOS.push(...EARLY_SCENARIOS);
@@ -1412,10 +1412,10 @@ Object.assign(LEARN, {
 "オーバーリンプの例外":"①先頭でなく便乗か ②手が投機的か(小ペア/SC) ③深いか。3条件が揃った時だけリンプ解禁。誤解:リンプは無条件で悪手。",
 "逆ドミネーションの回避":"①相手のレンジ(タイトUTG=AK/AQ/大ペア) ②自分のAが当たった時に勝てるか ③ディープほどキッカー負けの支払いが大きい→見送り。",
 "ワンペアで飛ばない":"①SPRを確認(高い=ワンペアは中ポットまで) ②相手の連続攻撃=セット以上のシグナル ③『まだトップペアだから』は継続理由にならない。",
-"参加はレイズから":"①先頭ならレイズ一択 ②序盤に変わるのは参加ハンドの中身(SC・小ペア↑、オフスートブロードウェイ↓) ③オープンリンプと便乗リンプを区別。",
+"序盤でも参加はレイズから":"①先頭ならレイズ一択 ②序盤に変わるのは参加ハンドの中身(SC・小ペア↑、オフスートブロードウェイ↓) ③オープンリンプと便乗リンプを区別。",
 "KQoの見送り":"①レイズ+コールの後=レンジが引き締まっている ②KQoが当たって勝てる相手が少ない ③終盤のプッシュ価値とディープの参加価値は別物。",
 "ナッツ級は育てる":"①自分の手はスタック全部を入れられるクラスか ②Yesならポットを育てる機会を逃さない ③マルチウェイ+ドローありなら尚更大きく。",
-"AAは常に全部入れる":"①生存戦略の対象は「マージナルな大ポット」 ②AAのプリフロ全額は常に+EV ③避けるべきリスクと取るべきリスクを混同しない。"
+"AAは序盤でも全部入れる":"①生存戦略の対象は「マージナルな大ポット」 ②AAのプリフロ全額は常に+EV ③避けるべきリスクと取るべきリスクを混同しない。"
 });
 
 // 序盤・ディープの知識カード
@@ -1440,141 +1440,6 @@ CARDS.push(
  e:"マージナルな手で大ポットを作らない・強い相手と大きく戦わない、が生存の中身。ナッツ級が来たら序盤でも最大限張る。選別とパッシブの混同が次の落とし穴。"}
 );
 
-// ===== ライブキャッシュ固有コンテンツ =====
-const CASH_SCENARIOS=[
-{cat:"cash", level:1, title:"リンパーへのアイソレーション",
- metaG:{st:"ライブキャッシュ",pl:"9人",pos:"BTN(ボタン)",stk:"100bb",act:"甘いプレイヤー2人がリンプ。あなたに回ってきた"},
- situ:[], hero:["Ah","Jh"], board:[],
- opts:[{label:"大きめのレイズ(5〜6bb)",grade:"best",note:"ライブはサイズを上げて絞る"},{label:"標準レイズ(3bb)",grade:"ok",note:"方向は正しいが安すぎる"},{label:"リンプ(便乗)",grade:"miss",note:"AJsは便乗でなく主導する手"}],
- exp:"AJsのような強い手でリンパーの後ろに回ったら、大きめのレイズで弱い手を締め出しつつポットを育てる「アイソレーション」が基本です。サイズの目安は標準3bb+リンパー1人につき+1bb、コールが緩いライブではさらに大きく。3bbでは全員がついてきて、AJsの強みが薄まるマルチウェイになってしまいます。投機的ハンドの便乗リンプ(別問題)と、強い手のアイソは使い分けです。",
- pr:"ライブのレイズサイズは理論より大きく。降りない相手には価格で選別する。"},
-{cat:"cash", level:2, title:"ライブの3ベットに対して",
- metaG:{st:"ライブキャッシュ",pl:"9人",pos:"CO",stk:"120bb",act:"あなたのAQoのレイズに、堅実な常連が3ベット。あなたに戻ってきた"},
- situ:[], hero:["Ac","Qd"], board:[],
- opts:[{label:"フォールド",grade:"best",note:"ライブの3ベットはQQ+/AK級"},{label:"コール",grade:"ok",note:"ポジションがあれば粘れなくはない"},{label:"4ベット",grade:"blunder",note:"上位レンジに突撃"}],
- exp:"ライブキャッシュの中低額帯では、3ベットのブラフ頻度が理論より圧倒的に低く、堅実な常連の3ベットはほぼQQ+/AKです。AQoはそのレンジに対してドミネートされる側で、コールしてAかQが当たった時こそ大きく支払うリスクがあります。オンラインのGTO感覚で「AQは3ベットに降りない」を適用すると、ライブでは高くつきます。",
- pr:"ライブの3ベットは申告制の「強い手があります」。AQ・JJ級でも降りてよい。"}
-];
-SCENARIOS.push(...CASH_SCENARIOS);
-
-Object.assign(LEARN, {
-"リンパーへのアイソレーション":"①リンパーの数と甘さを確認 ②サイズ=3bb+1bb×リンパー数(ライブはさらに上乗せ) ③目的は「弱い手と1対1の有利なポット」を作ること。",
-"ライブの3ベットに対して":"①相手のタイプ(堅実な常連=3ベットは本物) ②AQ/JJがドミネートされる側だと自覚 ③ポジションと深さ次第でコール、基本は見送り。"
-});
-
-CARDS.push(
-{d:"cash", q:"キャッシュゲームとトーナメントの最大の違いは?",
- o:[{t:"チップ=現金そのもので、ICMの歪みが存在しない",ok:1},{t:"使うルールが違う"},{t:"キャッシュにはブラフがない"},{t:"違いはない"}],
- e:"ブラインドは一定、いつでも退出・補充ができ、チップの価値は常に額面通り。判断は純粋なチップEVで行う。MTTのICM調整は持ち込まない。"},
-{d:"cash", q:"ライブキャッシュに必要なバンクロールの目安は?",
- o:[{t:"そのレートのバイイン(100bb)×20〜40個分",ok:1},{t:"バイイン3個分"},{t:"バイイン100〜500個分"},{t:"1個あれば十分"}],
- e:"キャッシュはMTTより分散が小さいため、必要バンクロールも小さい(MTTは100〜500個)。ただし20個を切るレートで打ち続けるのは破産リスク圏。"},
-{d:"cash", q:"ライブキャッシュで最も収支に効く「技術」は?",
- o:[{t:"テーブル選択(甘い卓を選び、固い卓を離れる)",ok:1},{t:"ブラフの頻度"},{t:"ハンドリーディング"},{t:"ポーカーフェイス"}],
- e:"リンプが多い・笑い声が多い・スタックがバラバラの卓は甘い。上手い相手6人の卓で勝つより、甘い卓を探す方がはるかに簡単に期待値が上がる。"},
-{d:"cash", q:"レーキ(場代)が戦略に与える影響は?",
- o:[{t:"小さいポットほど負担率が重く、極小ポットの争いの価値が下がる",ok:1},{t:"大きいポットほど不利になる"},{t:"戦略には影響しない"},{t:"ブラフが増える"}],
- e:"ポットから一定割合(上限あり)を場が徴収するため、小競り合いの利益はレーキに食われやすい。限界的な参加・限界的なスチールはオンラインより価値が下がる。"},
-{d:"cash", q:"ライブキャッシュの集団傾向として正しいのは?",
- o:[{t:"リンプが多く、3ベットは強い手に偏り、大きなベットはバリュー寄り",ok:1},{t:"全員がGTO通りに打つ"},{t:"ブラフが理論より多い"},{t:"タイトな卓ばかり"}],
- e:"中低額帯の共通傾向。対策はシンプルで「バリューを太く・薄いブラフキャッチを减らし・3ベットには敬意を払う」。"},
-{d:"cash", q:"ストラドル(BBの倍額を先出しする第3ブラインド)がある時の調整は?",
- o:[{t:"実効スタックが半分になったのと同等。レンジをやや締めてサイズを上げる",ok:1},{t:"何も変わらない"},{t:"レンジを広げる"},{t:"必ず自分もストラドルする"}],
- e:"100bbの卓でストラドルが入ると実質50bbのゲームになる。bb換算で考え直すのが正解で、深さ半減=投機的ハンドの価値も下がる。"},
-{d:"cash", q:"負けている時の退出判断は?",
- o:[{t:"取り返しを目的に延長しない。卓の質と自分の状態で決める",ok:1},{t:"負け分を取り返すまで続ける"},{t:"必ず即帰る"},{t:"レートを上げて挽回する"}],
- e:"「今日の収支」はEVと無関係な数字。ティルト(感情的乱れ)での延長とレート上げは、キャッシュゲームで破産する二大ルート。"},
-{d:"cash", q:"キャッシュ(100bb+)のプリフロップで最も価値が上がる状況は?",
- o:[{t:"甘い相手とポジションありで深いポットを作れる状況",ok:1},{t:"誰よりも多くのハンドに参加すること"},{t:"ブラインドの奪い合い"},{t:"常に3ベットすること"}],
- e:"キャッシュの利益源は「深いスタック×技術差×ポジション」。ブラインド争いの価値はMTT終盤より低く、ポジションで甘い相手と戦う価値が最も高い。"}
-);
-
-// ===== キャッシュ暗記知識の拡充(プリフロップ/テル/実務ルール/数値追加) =====
-CARDS.push(
-// ---- プリフロップ基礎(100bb) ----
-{d:"pre", q:"【9人・100bb】UTGのオープンレイズ目安は?",
- o:[{t:"全体の約12%(66+、ATs+、AJo+、KQ級)",ok:1},{t:"約25%"},{t:"約45%"},{t:"約5%"}],
- e:"後ろに8人いる先頭は厳選。ここから1つポジションが下がるごとに数%ずつ広がっていく。表タブでポジションごとの形を確認できる。"},
-{d:"pre", q:"【9人・100bb】BTN(ボタン)のオープン目安は?",
- o:[{t:"全体の約45%",ok:1},{t:"約15%"},{t:"約70%"},{t:"約25%"}],
- e:"残る相手はブラインド2人+常にポジションがあるため、ほぼ半分の手で参加できる。UTGとの差(12%→45%)がポジションの価値そのもの。"},
-{d:"pre", q:"ライブキャッシュのオープンサイズの標準は?",
- o:[{t:"3〜4bb(+リンパー分の上乗せ)。オンラインより大きい",ok:1},{t:"2bb(ミニレイズ)"},{t:"常に10bb"},{t:"常にリンプ"}],
- e:"オンラインの標準(2.2〜2.5bb)より大きいのは、ライブはコールが緩く、小さいレイズでは誰も降りないため。価格で人数を絞る。"},
-{d:"pre", q:"ライブの中低額帯で、3ベットの中心レンジは?",
- o:[{t:"QQ+/AK級のバリューに大きく偏る",ok:1},{t:"理論通りブラフ入りでバランス"},{t:"スーテッドコネクター中心"},{t:"どの手でも均等"}],
- e:"ライブ集団はブラフ3ベットが極端に少ない。自分の3ベットもまずバリュー中心で組み、相手の3ベットには敬意を払う——両面で使う知識。"},
-{d:"pre", q:"オープンへのコールドコールに向く手は?",
- o:[{t:"小〜中ペア、スーテッドコネクター、スーテッドA",ok:1},{t:"AJo、KQoなどオフスートブロードウェイ"},{t:"どんな手でも良い"},{t:"AA/KK(隠すため)"}],
- e:"「安く見て、強く当たったら深く取る」実現性の高い手がコール向き。逆にオフスートブロードウェイはドミネートされる側になりやすいコール最悪組。AA/KKは3ベットでポットを育てる。"},
-{d:"pre", q:"SB(スモールブラインド)の基本原則は?",
- o:[{t:"コールドコールを避け、3ベットかフォールドに寄せる",ok:1},{t:"半額だから広くコール"},{t:"全ハンド参加"},{t:"常にフォールド"}],
- e:"SBは全ラウンド最初に行動する最悪ポジションで、中途半端なコールはBBのスクイーズも招く。「半額だから安い」ではなく「不利だから絞る」。"},
-{d:"pre", q:"マルチウェイだらけのライブ卓でのハンド価値は?",
- o:[{t:"ペア・スーテッド系が上がり、オフスートブロードウェイが下がる",ok:1},{t:"変わらない"},{t:"ハイカードが最強になる"},{t:"全ての手が下がる"}],
- e:"人数が増えるほど「当たればはっきり強い手」が勝ち、「微妙なワンペア止まりの手」は誰かに負ける。ライブの常態(3〜5人フロップ)に合わせた補正。"},
-{d:"pre", q:"BBディフェンスのライブ調整は?",
- o:[{t:"理論より締める(ライブのオープンは大きくレンジが強いため)",ok:1},{t:"理論より広げる"},{t:"全ハンド守る"},{t:"常に3ベットで返す"}],
- e:"BB防御理論はミニレイズ前提の話。ライブの3.5〜4bbオープンに対しては価格が悪く、相手レンジも強いので、教科書の防御率をそのまま適用しない。"},
-// ---- テル&ライブ読み ----
-{d:"tell", q:"古典的テル:相手が「強そうに」振る舞う(睨む・チップを強く叩きつける)時は?",
- o:[{t:"弱いことが多い(強さの演技は弱さの補償)",ok:1},{t:"強いことが多い"},{t:"何も意味しない"},{t:"必ずブラフ"}],
- e:"マイク・カロの古典法則「演技は逆」。意図的に見せる行動は、実際の手の強さと逆方向のことが多い。ただし単発で決めず傾向として使う。"},
-{d:"tell", q:"古典的テル:相手が「弱そうに」振る舞う(ため息・渋々のベット)時は?",
- o:[{t:"強いことが多い",ok:1},{t:"弱いことが多い"},{t:"降りようとしている"},{t:"意味しない"}],
- e:"同じく「演技は逆」の裏面。わざわざ弱さを演出してコールを誘っている可能性を最初に疑う。"},
-{d:"tell", q:"即座のコール(考える間がない)が示唆しやすいのは?",
- o:[{t:"ドローか中程度の手(レイズの検討余地がない手)",ok:1},{t:"ナッツ級"},{t:"完全なブラフ"},{t:"何も示唆しない"}],
- e:"強い手はレイズを検討するため自然と間が生まれる。即コール=「コール以外の選択肢を考える必要がなかった手」の可能性が高い。"},
-{d:"tell", q:"ベットする手が震えている時の古典的解釈は?",
- o:[{t:"強い手のアドレナリンであることが多い(緊張ではない)",ok:1},{t:"ブラフの緊張"},{t:"疲労"},{t:"寒さ"}],
- e:"意外だが定番の読み。大きい手を持った興奮の生理反応で、ブラフ時はむしろ静止しようとする人が多い。"},
-{d:"tell", q:"あなたのアクション前に相手がチップを構えたら?",
- o:[{t:"コールの意思表示と読み、ブラフを減らしバリューを太くする",ok:1},{t:"降りる合図"},{t:"レイズの合図"},{t:"無視すべき"}],
- e:"「打っても降りませんよ」という(時に演技の)サイン。真に受けるかは相手次第だが、少なくともブラフの期待値は下げて考える。"},
-{d:"tell", q:"テルの正しい使い方は?",
- o:[{t:"平常時(ベースライン)との差分で読み、最後のタイブレークに使う",ok:1},{t:"テルだけで全ての判断を決める"},{t:"テルは全て無視する"},{t:"初対面ほど信用する"}],
- e:"人によって癖は逆のこともある。まず平常時を観察し、変化を拾う。数学とレンジで8割決めて、五分の判断の最後の一押しに使うのが正しい比重。"},
-// ---- ライブ実務・ルール ----
-{d:"rule", q:"ストリングベット(チップを数回に分けて出す)は?",
- o:[{t:"無効。ワンモーションで出すか、先に金額を宣言する",ok:1},{t:"有効"},{t:"レイズ扱い"},{t:"店によっては推奨"}],
- e:"「コール…と見せてレイズ」を防ぐルール。後から足した分は認められない。事前の口頭宣言(『レイズ、○○』)が最も安全。"},
-{d:"rule", q:"口頭宣言とチップの動きが食い違ったら?",
- o:[{t:"先に出た口頭宣言が優先され、拘束力を持つ",ok:1},{t:"チップが優先"},{t:"やり直せる"},{t:"ディーラーの気分次第"}],
- e:"「コール」と言ってしまえばチップを出す前でもコール確定。逆に言えば、宣言してからゆっくり出せばストリングベットにもならない。"},
-{d:"rule", q:"宣言なしで大きな1枚のチップを出したら?",
- o:[{t:"コール扱い(ワンチップルール)",ok:1},{t:"チップ額面のレイズ"},{t:"無効"},{t:"オールイン"}],
- e:"レイズのつもりで5,000点1枚を無言で出してもコールにしかならない。レイズしたい時は必ず口頭で宣言する癖をつける。"},
-{d:"rule", q:"テーブルステークスの原則とは?",
- o:[{t:"卓上にあるチップしか賭けられず、ハンド中の補充はできない",ok:1},{t:"財布からいつでも追加できる"},{t:"借金で継続できる"},{t:"チップに上限がない"}],
- e:"ポケットの現金は存在しないのと同じ。だから「実効スタック」(自分と相手の少ない方)が全ての計算の基準になる。"},
-{d:"rule", q:"自分の手札を1人のプレイヤーに見せたら?",
- o:[{t:"全員に見せる義務が生じる(ショー・ワン、ショー・オール)",ok:1},{t:"その人だけの秘密にできる"},{t:"罰金"},{t:"失格"}],
- e:"情報の公平性のためのルール。降りた後に隣へ「見て見て」は全員公開につながる。基本は誰にも見せない。"},
-{d:"rule", q:"自分の番が来る前にアクションしてしまう(アウトオブターン)と?",
- o:[{t:"原則無効+他人に情報を与える損。自分の番まで待つ",ok:1},{t:"早い者勝ちで有効"},{t:"必ず罰則"},{t:"問題ない"}],
- e:"前の人のアクションで状況が変われば拘束されないことも多いが、いずれにせよ「先に降りる気だ」等の情報をタダで配る行為。順番厳守は自衛。"},
-{d:"rule", q:"ラビットハンティング(降りた後に「もしも」のカードを見せてもらう)は?",
- o:[{t:"多くの店で不可。可能でも自分の傾向情報を配る行為",ok:1},{t:"権利として保障される"},{t:"必ずやるべき"},{t:"ディーラーの義務"}],
- e:"「何をドローしていたか」を全員に教える上に、結果論で心を乱す原因にもなる。降りたハンドは終わったハンド。"},
-{d:"rule", q:"曖昧なチップ動作や見せかけのフォールドをする相手(アングル)への対処は?",
- o:[{t:"自分の判断で解釈せず、ディーラーに状況確認を求める",ok:1},{t:"こちらも同じ手を使う"},{t:"無視して進める"},{t:"直接抗議して口論する"}],
- e:"アングルシュート(ルールの隙を突く行為)は宣言の曖昧さに寄生する。「今のはコールですか?」とディーラーに確定させるのが最も安全で角も立たない。"},
-// ---- キャッシュ数値の追加 ----
-{d:"cash", q:"セットマインの採算ライン(15〜20倍ルール)とは?",
- o:[{t:"コール額の15〜20倍を相手のスタックから回収できる見込みがあること",ok:1},{t:"5倍あれば十分"},{t:"100倍必要"},{t:"倍率は無関係"}],
- e:"セットは約8回に1回(12%)しか引けず、引いても毎回全額取れるわけではない。3bbのコールなら相手に50bb前後の残りが最低ライン。"},
-{d:"cash", q:"インプライドオッズで直接オッズの不足を補えるのは?",
- o:[{t:"完成が隠れやすい手で、相手が深く払える時",ok:1},{t:"どんな状況でも補える"},{t:"相手が浅い時"},{t:"完成が見え見えのドローの時"}],
- e:"回収の前提は「完成しても相手が払うこと」。4枚目のフラッシュカードのような見え見えの完成は払われにくく、隠れたストレートやセットは払われやすい。"},
-{d:"cash", q:"200bb超のディープで価値が上がるものは?",
- o:[{t:"ポジションとナッツ級の手(ワンペアの価値はさらに低下)",ok:1},{t:"オールインの頻度"},{t:"ブラインドスチール"},{t:"オフスートブロードウェイ"}],
- e:"深くなるほど後のストリートの意思決定が増え、ポジション差が拡大する。同時に「スタックが入る=ナッツ級同士」の傾向も強まる。"},
-{d:"cash", q:"スタック補充(リバイ)の原則は?",
- o:[{t:"常に100bb近くを維持する(取りこぼしと技術差の目減りを防ぐ)",ok:1},{t:"減ったまま打ち続ける"},{t:"勝つまで補充しない"},{t:"最小額で座る"}],
- e:"スタックが短いと、モンスターを引いた時に相手から取り切れない。技術優位を深さで発揮するゲームなので、削れたら補充が標準(卓が甘い限り)。"}
-);
-
 // ===== 統合アダプティブエンジン v2(モバイルファースト固定画面構造) =====
 const GRADE_INFO = {
   best:{jp:"最善",pts:+15,cls:"best"}, ok:{jp:"許容",pts:+5,cls:"ok"},
@@ -1588,10 +1453,6 @@ function nodeOfCard(c){
   if(c.d==="gto") return "gto";
   if(c.d==="pf") return "postflop";
   if(c.d==="early") return "early";
-  if(c.d==="cash") return "cash";
-  if(c.d==="pre") return "pre";
-  if(c.d==="tell") return "tell";
-  if(c.d==="rule") return "rule";
   if(c.d==="nash") return "nash-"+(detectSpot(t)||"sb10");
   if(c.d==="icm"){
     if(/サテライト/.test(t)) return "icm-sat";
@@ -1609,24 +1470,16 @@ function nodeOfScenario(q){
   if(q.cat==="postflop") return "postflop";
   if(q.cat==="gto") return "gto";
   if(q.cat==="early") return "early";
-  if(q.cat==="cash") return "cash";
   if(q.cat==="push") return "nash-"+(detectSpot(q.title+q.situ.join(""))||"sb10");
   if(q.cat==="open") return "open";
   if(q.cat==="icm") return /サテライト/.test(q.title)?"icm-sat":"icm";
   return "odds";
 }
-const CASH_EXCLUDE=["ショートスタックの単純化","低SPRでのコミット判断","コンボドローのチェックレイズ"];
-const CARDS_F=CARDS.filter(c=>c.d!=="nash"&&c.d!=="icm");
-const SCEN_F=SCENARIOS.filter(q=>["postflop","gto","early","cash"].includes(q.cat)&&!CASH_EXCLUDE.includes(q.title));
-SCEN_F.forEach(q=>{ if(q.metaG){
-  if(q.cat==="early") q.metaG.st="ライブキャッシュ(ディープ)";
-  else if(q.cat!=="cash"){ q.metaG.st="ライブキャッシュ"; if(/^\d+bb$/.test(q.metaG.stk)) q.metaG.stk="100bb"; }
-}});
 const ITEMS=[
-  ...CARDS_F.map(c=>({type:"know", ref:c, node:nodeOfCard(c), box:1})),
-  ...SCEN_F.map(q=>({type:"judge", ref:q, node:nodeOfScenario(q), box:1}))
+  ...CARDS.map(c=>({type:"know", ref:c, node:nodeOfCard(c), box:1})),
+  ...SCENARIOS.map(q=>({type:"judge", ref:q, node:nodeOfScenario(q), box:1}))
 ];
-const GROUP_LIST=[["pre","プリフロップ(100bb)"],["outs","アウツ&勝率"],["odds","オッズ判断"],["bluff","ブラフ&MDF"],["matchup","マッチアップ"],["postflop","ポストフロップ"],["gto","GTO理論"],["early","ディープの基礎"],["cash","ライブキャッシュ"],["tell","テル&読み"],["rule","ライブ実務"],["principle","原則"]];
+const GROUP_LIST=[["outs","アウツ&勝率"],["odds","オッズ判断"],["bluff","ブラフ&MDF"],["matchup","マッチアップ"],["open","オープンレンジ"],["postflop","ポストフロップ"],["gto","GTO理論"],["early","序盤・ディープ"],["nash","ナッシュP/F"],["icm","ICM&バブル"],["icm-sat","サテライト"],["principle","原則"]];
 const groupOf=n=>n.startsWith("nash-")?"nash":n;
 const groupLabel=n=>(GROUP_LIST.find(g=>g[0]===groupOf(n))||["","その他"])[1];
 
@@ -1787,21 +1640,33 @@ function answerKnow(btn,it){
   saveState();
 }
 
-// --- オープンレンジ表(キャッシュ100bb・ポジション1変数) ---
-const POS_ORDER=["UTG","MP","HJ","CO","BTN","SB"];
-const OPEN_RANGES={
- "UTG":{d:"9人テーブルの先頭。後ろに8人いるため最も厳選。",
-  r:"66+, ATs+, AJo+, KQs, KJs, QJs, JTs, T9s"},
- "MP":{d:"UTGの次。まだタイトだが少し広がる。",
-  r:"55+, A9s+, ATo+, KTs+, KQo, QJs, JTs, T9s, 98s"},
- "HJ":{d:"ボタンの2つ手前。中間の広さ。",
-  r:"44+, A7s+, A9o+, K9s+, KJo+, Q9s+, QJo, J9s+, T8s+, 98s, 87s"},
+// --- レンジ表(2変数エクスプローラ:固定変数+フェーダー) ---
+const POS_ORDER=["UTG","HJ","CO","BTN","SB","BBコール"];
+const RANGES2={
+ "UTG":{d:"9人テーブルの先頭。後ろに8人いるため最も狭い。",
+   5:"22+, A2s+, A7o+, K9s+, KQo, QTs+, JTs",
+   10:"55+, A9s+, AJo+, KQs",
+   15:"77+, ATs+, AJo+, KQs"},
+ "HJ":{d:"ボタンの2つ手前。中盤ポジション。",
+   5:"22+, A2s+, A4o+, K7s+, KTo+, Q9s+, QJo, JTs, T9s",
+   10:"44+, A7s+, A9o+, KTs+, KQo, QJs",
+   15:"66+, A9s+, ATo+, KQs, KJs"},
  "CO":{d:"ボタンの1つ手前。ここから一気に広がる。",
-  r:"22+, A2s+, A8o+, K7s+, KTo+, Q8s+, QTo+, J8s+, JTo, T8s+, 97s+, 87s, 76s"},
- "BTN":{d:"最有利ポジション。ほぼ半分の手で参加できる。",
-  r:"22+, A2+, K4s+, K8o+, Q5s+, Q9o+, J7s+, J9o+, T7s+, T9o, 96s+, 98o, 86s+, 75s+, 65s, 54s"},
- "SB":{d:"不利な席だがレイズファースト(参加するならレイズ)の目安。",
-  r:"22+, A2s+, A4o+, K5s+, K9o+, Q7s+, QTo+, J8s+, JTo, T8s+, 97s+, 87s, 76s"}
+   5:"22+, A2+, K5s+, K9o+, Q8s+, QTo+, J8s+, JTo, T8s+, 98s",
+   10:"22+, A2s+, A8o+, K9s+, KJo+, QTs+, JTs",
+   15:"55+, A7s+, ATo+, KTs+, KQo, QJs"},
+ "BTN":{d:"残る相手はブラインドの2人だけ。",
+   5:"22+, A2+, K2s+, K5o+, Q4s+, Q8o+, J6s+, J9o+, T7s+, T9o, 96s+, 98o, 86s+, 76s",
+   10:"22+, A2+, K5s+, K9o+, Q8s+, QTo+, J8s+, JTo, T8s+, 98s, 87s",
+   15:"22+, A2s+, A8o+, K8s+, KJo+, Q9s+, QJo, J9s+, T9s, 98s"},
+ "SB":{d:"相手はBB1人のみ。プッシュレンジは最も広い。",
+   5:"22+, A2+, K2+, Q2s+, Q4o+, J2s+, J7o+, T4s+, T7o+, 95s+, 97o+, 85s+, 87o, 75s+, 76o, 65s",
+   10:"22+, A2+, K2s+, K4o+, Q2s+, Q6o+, J4s+, J8o+, T6s+, T8o+, 96s+, 98o, 86s+, 76s, 65s",
+   15:"22+, A2+, K4s+, K8o+, Q6s+, Q9o+, J7s+, J9o+, T7s+, T9o, 97s+, 87s"},
+ "BBコール":{d:"SBのオールインに対するBBのコール目安。プッシュ側よりずっと狭い。", act:"コール",
+   5:"22+, A2+, K2s+, K5o+, Q5s+, Q9o+, J7s+, J9o+, T8s+, T9o, 98s",
+   10:"22+, A2s+, A2o+, K8s+, KTo+, Q9s+, QJo, J9s+, T9s",
+   15:"55+, A7s+, ATo+, KTs+, KQo, QJs"}
 };
 function gridRawHTML(rangeStr, label, action){
   const set=expandRange(rangeStr);
@@ -1815,21 +1680,45 @@ function gridRawHTML(rangeStr, label, action){
     else key=RANKS[j]+RANKS[i]+"o";
     cells+=`<span class="rc ${i===j?"pair":""} ${set.has(key)?"on":""}">${key}</span>`;
   }
-  return `<div class="kt-title">📊 ${label}(赤=${action}、全体の約${pct}%)</div><div class="rgrid">${cells}</div>`;
+  return `<div class="kt-title">📊 ${label}(緑=${action}、全体の約${pct}%)</div><div class="rgrid">${cells}</div>`;
 }
 function chartGrid(){
-  return gridRawHTML(OPEN_RANGES[state.cpos].r, `${state.cpos} オープンレイズ(100bb)`, "オープン");
+  const r=RANGES2[state.cpos][state.cstk];
+  const action=RANGES2[state.cpos].act||"プッシュ";
+  return gridRawHTML(r, `${state.cpos} ${state.cstk}bb`, action);
 }
 function renderChartView(){
   el("abar").innerHTML="";
+  const fixedPos = state.cfix==="pos";
   el("content").innerHTML=`
-    <div class="qmeta"><span class="tag">オープンレンジ表(キャッシュ100bb・簡略目安)</span></div>
-    <div class="spot-sel">${POS_ORDER.map(p=>`<button class="cat ${p===state.cpos?"active":""}" data-p="${p}">${p}</button>`).join("")}</div>
-    <div class="rdesc" id="cdesc">${OPEN_RANGES[state.cpos].d} ポジションを切り替えて、参加できる手の増え方を観察してください。</div>
+    <div class="qmeta"><span class="tag">レンジ表エクスプローラ(簡略ナッシュ近似)</span></div>
+    <div class="spot-sel">
+      <button class="cat ${fixedPos?"active":""}" data-tg="pos">ポジションを固定</button>
+      <button class="cat ${!fixedPos?"active":""}" data-tg="stack">スタックを固定</button>
+    </div>
+    ${fixedPos
+      ? `<div class="spot-sel">${POS_ORDER.map(p=>`<button class="cat ${p===state.cpos?"active":""}" data-p="${p}">${p}</button>`).join("")}</div>
+         <div class="fader-row"><span class="fader-lbl">スタック</span>
+           <input type="range" class="fader" id="fader" min="5" max="15" step="5" value="${state.cstk}">
+           <span class="fader-val" id="fval">${state.cstk}bb</span></div>`
+      : `<div class="spot-sel">${[5,10,15].map(s=>`<button class="cat ${s===state.cstk?"active":""}" data-s="${s}">${s}bb</button>`).join("")}</div>
+         <div class="fader-row"><span class="fader-lbl">ポジション</span>
+           <input type="range" class="fader" id="fader" min="0" max="5" step="1" value="${POS_ORDER.indexOf(state.cpos)}">
+           <span class="fader-val" id="fval">${state.cpos}</span></div>`}
+    <div class="rdesc" id="cdesc">${RANGES2[state.cpos].d} フェーダーで${fixedPos?"スタック量":"ポジション"}だけを動かして、緑の伸縮を観察してください。</div>
     <div id="cgrid">${chartGrid()}</div>
-    <div class="rnote">「全員フォールドで自分に回ってきた時にレイズで参加する手」の目安(9人・100bb)。誰かが先に参加している場合は別の判断(アイソレーション/コールドコール/3ベット)になる。<br>暗記用の簡略近似。ライブでは相手が甘いほど広げてよく、オープンサイズは3〜4bbと大きめが標準。</div>`;
+    <div class="rnote">大原則:①スタックが浅いほど広がる ②後ろに残る人数が少ないほど広がる ③コールはプッシュよりずっと狭い。<br>この表は暗記用の簡略近似(±1〜2ハンド許容)。正確なナッシュ表はHoldemResources Calculator、SnapShove、GTO Wizard(無料枠)で確認できます。</div>`;
   const c=el("content");
+  c.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{state.cfix=b.dataset.tg; renderChartView();});
   c.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.cpos=b.dataset.p; renderChartView();});
+  c.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{state.cstk=+b.dataset.s; renderChartView();});
+  const f=el("fader");
+  if(f) f.oninput=()=>{
+    if(fixedPos){ state.cstk=+f.value; el("fval").textContent=state.cstk+"bb"; }
+    else { state.cpos=POS_ORDER[+f.value]; el("fval").textContent=state.cpos; }
+    el("cdesc").textContent=RANGES2[state.cpos].d+" フェーダーで"+(fixedPos?"スタック量":"ポジション")+"だけを動かして、緑の伸縮を観察してください。";
+    el("cgrid").innerHTML=chartGrid();
+  };
   el("content").scrollTop=0;
 }
 
@@ -1862,7 +1751,7 @@ function renderStatsView(){
       </div>
     </div>
     <footer>
-      🎯 特訓(ミックス):ライブキャッシュ向けの知識カードと判断問題が1本のキューに流れます。分野の知識習熟度が低いうちは暗記中心、上がるほど判断問題が増加。判断ミス時はその分野の前提知識カードが割り込み出題(📥)。<br>
+      🎯 特訓(ミックス):知識カード68枚と判断問題122問が1本のキューに流れます。分野の知識習熟度が低いうちは暗記中心、上がるほど判断問題が増加。判断ミス時はその分野の前提知識カードが割り込み出題(📥)。<br>
       採点:判断=最善+15/許容+5/ミス−10/大ミス−25(レート)、知識=正解でXP+コンボ。ライトナー式(箱1〜5)。キワ問題はミス判定なし。<br>💾 進捗保存: ${CAN_SAVE?"<b>有効</b>(この端末に自動保存されます)":"この環境では無効(セッション内のみ。端末保存ファイルやホスティング版では自動で有効になります)"} ${CAN_SAVE?`<button class="cat" id="rsbtn">進捗をリセット</button>`:""}
     </footer>`;
   const rb=el("rsbtn");
@@ -1889,7 +1778,7 @@ function renderNav(){
 }
 
 // ===== 進捗の永続化(対応環境ではlocalStorageに自動保存) =====
-const SAVE_KEY="poker-cash-v1";
+const SAVE_KEY="poker-dojo-v1";
 function storageOK(){ try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; }catch(e){ return false; } }
 const CAN_SAVE=storageOK();
 function itemKey(it){ return it.type==="judge" ? "j:"+it.ref.title : "k:"+it.ref.q; }
