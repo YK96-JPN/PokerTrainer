@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0f1720">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ポーカー特訓道場 v2.1(モバイル最適化)</title>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#1a2532; --panel2:#223144; --line:#2e415a;
+    --text:#e8eef5; --muted:#8fa3b8; --accent:#3ecf8e; --gold:#f2c14e;
+    --best:#3ecf8e; --ok:#5aa9e6; --miss:#f2a05d; --blunder:#e5636c;
+    --felt:#1e4d3a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{height:100%;}
+  html,body{overflow-anchor:none; -webkit-text-size-adjust:100%;}
+  body{
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",Meiryo,sans-serif;
+    background:var(--bg); color:var(--text); height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .wrap{width:100%; max-width:640px; padding:16px 14px 60px;}
+  header{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  h1{font-size:1.05rem; letter-spacing:.02em;}
+  h1 small{color:var(--muted); font-weight:normal; font-size:.72rem; margin-left:6px;}
+  .chips{display:flex; gap:8px;}
+  .chip{
+    background:var(--panel); border:1px solid var(--line); border-radius:999px;
+    padding:5px 12px; font-size:.8rem; display:flex; align-items:center; gap:6px;
+  }
+  .chip b{color:var(--gold);}
+  .chip .streak-b{color:var(--accent);}
+  nav{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
+  .cat{
+    background:var(--panel); border:1px solid var(--line); color:var(--muted);
+    border-radius:999px; padding:6px 12px; font-size:.78rem; cursor:pointer;
+  }
+  .cat.active{background:var(--accent); color:#08281a; border-color:var(--accent); font-weight:bold;}
+  .qcard{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:16px; margin-bottom:14px;
+  }
+  .qmeta{display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;}
+  .tag{font-size:.7rem; padding:3px 9px; border-radius:6px; background:var(--panel2); color:var(--muted); border:1px solid var(--line);}
+  .tag.review{color:var(--gold); border-color:var(--gold);}
+  .stars{color:var(--gold); font-size:.75rem; letter-spacing:2px;}
+  .qtitle{font-size:.95rem; font-weight:bold; margin-bottom:8px;}
+  .situ{
+    background:var(--felt); border-radius:10px; padding:12px 14px; margin-bottom:12px;
+    font-size:.86rem; line-height:1.75;
+  }
+  .situ .lbl{color:#a8d5be; font-size:.72rem;}
+  .cards-row{display:flex; align-items:center; gap:12px; margin:10px 0 4px; flex-wrap:wrap;}
+  .cards-lbl{font-size:.78rem; color:#f2c14e; min-width:5.5em; font-weight:bold;}
+  .srow{display:flex; gap:4px; align-items:baseline;}
+  .slbl{color:#f2c14e; font-size:.78rem; font-weight:bold; flex-shrink:0;}
+  .card{
+    display:inline-flex; flex-direction:column; align-items:center; justify-content:center;
+    width:42px; height:58px; border-radius:6px; background:#f7f7f2; margin-right:4px;
+    font-weight:bold; font-size:1.05rem; line-height:1.1; box-shadow:0 2px 4px rgba(0,0,0,.4);
+  }
+  .card .suit{font-size:.95rem;}
+  .suit-s{color:#1b1b1b;} .suit-h{color:#d0342c;} .suit-d{color:#2065c9;} .suit-c{color:#1e7d3c;}
+  .noboard{color:#a8d5be; font-size:.8rem; font-style:italic;}
+  .qask{font-size:.9rem; font-weight:bold; margin:12px 0 10px; color:var(--gold);}
+  .opts{display:flex; flex-direction:column; gap:8px;}
+  .opt{
+    background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:12px 14px; font-size:.92rem; cursor:pointer; text-align:left;
+    transition:transform .05s;
+  }
+  .opt:hover{border-color:var(--accent);}
+  .opt:active{transform:scale(.985);}
+  .opt.revealed{cursor:default; opacity:.55;}
+  .opt.g-best.revealed{border-color:var(--best); opacity:1;}
+  .opt.g-ok.revealed{border-color:var(--ok);}
+  .opt.picked{outline:2px solid var(--gold); opacity:1;}
+  .opt .g-label{float:right; font-size:.75rem; font-weight:bold;}
+  .g-best .g-label{color:var(--best);} .g-ok .g-label{color:var(--ok);}
+  .g-miss .g-label{color:var(--miss);} .g-blunder .g-label{color:var(--blunder);}
+  .fb{display:none; margin-top:14px;}
+  .fb.show{display:block; animation:pop .18s ease-out;}
+  @keyframes pop{from{transform:translateY(6px); opacity:0;} to{transform:none; opacity:1;}}
+  .fb-banner{border-radius:10px; padding:10px 14px; font-weight:bold; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .fb-banner.b-best{background:rgba(62,207,142,.15); color:var(--best); border:1px solid var(--best);}
+  .fb-banner.b-ok{background:rgba(90,169,230,.15); color:var(--ok); border:1px solid var(--ok);}
+  .fb-banner.b-miss{background:rgba(242,160,93,.15); color:var(--miss); border:1px solid var(--miss);}
+  .fb-banner.b-blunder{background:rgba(229,99,108,.15); color:var(--blunder); border:1px solid var(--blunder);}
+  .fb-exp{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:.85rem; line-height:1.8; margin-bottom:10px;}
+  .fb-pr{
+    border-left:3px solid var(--gold); background:rgba(242,193,78,.08);
+    padding:9px 12px; font-size:.82rem; border-radius:0 8px 8px 0; margin-bottom:12px; color:#f5dfa8;
+  }
+  .fb-pr b{color:var(--gold);}
+  .nextbtn{
+    width:100%; background:var(--accent); color:#08281a; font-weight:bold; font-size:.95rem;
+    border:none; border-radius:10px; padding:13px; cursor:pointer;
+  }
+  .nextbtn:hover{filter:brightness(1.08);}
+  .stats{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px;}
+  .stats h2{font-size:.85rem; color:var(--muted); margin-bottom:12px;}
+  .rank-line{display:flex; align-items:baseline; gap:10px; margin-bottom:14px;}
+  .rank-title{font-size:1.15rem; font-weight:bold; color:var(--gold);}
+  .rank-sub{font-size:.75rem; color:var(--muted);}
+  .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:.78rem;}
+  .bar-row .bl{width:120px; color:var(--muted);}
+  .bar{flex:1; height:8px; background:var(--panel2); border-radius:99px; overflow:hidden;}
+  .bar i{display:block; height:100%; background:var(--accent); border-radius:99px; width:0%;}
+  .bar-row .bn{width:52px; text-align:right; color:var(--muted);}
+  .counts{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .cnt{font-size:.72rem; padding:4px 10px; border-radius:6px; background:var(--panel2);}
+  .cnt.c-best{color:var(--best);} .cnt.c-ok{color:var(--ok);}
+  .cnt.c-miss{color:var(--miss);} .cnt.c-blunder{color:var(--blunder);}
+  footer{margin-top:16px; font-size:.7rem; color:var(--muted); line-height:1.7;}
+  .fb-tip{background:rgba(62,207,142,.08); border:1px solid rgba(62,207,142,.45); border-radius:10px; padding:10px 14px; font-size:.85rem; line-height:1.7; margin-bottom:10px;}
+  .fb-tip b{color:var(--best);}
+  .fb-learn{background:rgba(90,169,230,.08); border:1px solid rgba(90,169,230,.45); border-radius:10px; padding:11px 14px; font-size:.84rem; line-height:1.85; margin-bottom:10px;}
+  .fb-learn b{color:var(--ok);}
+  .q-gloss{background:rgba(90,169,230,.06); border:1px solid var(--line); border-radius:10px; padding:2px 14px; font-size:.76rem; line-height:1.75; color:var(--muted); margin:12px 0;}
+  .q-gloss summary{cursor:pointer; padding:8px 0; color:var(--gold); font-size:.78rem; font-weight:bold; list-style:none;}
+  .q-gloss summary::before{content:"▸ ";}
+  .q-gloss[open] summary::before{content:"▾ ";}
+  .q-gloss .qg-body{padding-bottom:10px; max-height:190px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .q-gloss .fg-item{margin-top:4px;}
+  .q-gloss b{color:var(--accent);}
+  .rgrid{display:grid; grid-template-columns:repeat(13,1fr); gap:2px; margin-top:10px;}
+  .rc{aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:.53rem; border-radius:3px; background:var(--panel2); color:var(--muted); overflow:hidden;}
+  .rc.on{background:var(--accent); color:#08281a; font-weight:bold;}
+  .rc.pair{border:1px solid var(--line);}
+  .k-wrap{margin-bottom:12px;}
+  .kt-title{font-size:.78rem; color:var(--gold); font-weight:bold; margin:8px 0 6px;}
+  .ktbl{width:100%; border-collapse:collapse; font-size:.76rem; line-height:1.5;}
+  .ktbl th,.ktbl td{border:1px solid var(--line); padding:5px 8px; text-align:left;}
+  .ktbl th{color:var(--gold); background:var(--panel2); font-weight:bold;}
+  .ktbl td{color:var(--muted);}
+
+  /* ===== モバイルファースト固定画面シェル ===== */
+  html,body{height:100%; overflow:hidden; overscroll-behavior:none;}
+  body{display:block;}
+  .app{height:100vh; height:100dvh; max-width:640px; margin:0 auto;
+    display:flex; flex-direction:column; padding:10px 12px 0;}
+  header{margin-bottom:8px; flex:0 0 auto;}
+  h1{font-size:.95rem;}
+  nav{flex:0 0 auto; margin-bottom:8px;}
+  #content{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding-bottom:10px; overflow-anchor:none;}
+  #abar{flex:0 0 auto; border-top:1px solid var(--line); background:var(--bg);
+    padding:10px 0 calc(10px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:8px; max-height:44vh; overflow-y:auto;}
+  .abar-note{font-size:.78rem; color:var(--gold); font-weight:bold;}
+  #abar.answered .opt{padding:7px 12px; font-size:.8rem;}
+  .opts-grid2{display:flex; gap:8px;}
+  .opts-grid2 .opt{flex:1; text-align:center;}
+  .opt.correct.revealed{border-color:var(--best); opacity:1; background:rgba(62,207,142,.12);}
+  .opt.pickedwrong{border-color:var(--blunder); opacity:1; background:rgba(229,99,108,.12);}
+  .vs-lbl{color:#a8d5be; font-size:.85rem; font-weight:bold; margin:0 4px;}
+  .spot-sel{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .rnote{font-size:.72rem; color:var(--muted); line-height:1.7; margin-top:12px;}
+  .rdesc{font-size:.84rem; line-height:1.7; background:var(--felt); border-radius:10px; padding:12px 14px; margin-bottom:4px;}
+  .qtext{font-size:.95rem; font-weight:bold; line-height:1.8; margin-bottom:14px; white-space:pre-line; background:var(--felt); border-radius:10px; padding:14px 16px;}
+  .fb-inject{border:1px dashed var(--gold); color:var(--gold); border-radius:10px; padding:9px 12px; font-size:.8rem; margin-bottom:12px;}
+  .stats{margin-top:0;}
+  .fader-row{display:flex; align-items:center; gap:10px; margin:10px 0 4px;}
+  .fader{flex:1; accent-color:var(--accent); height:28px;}
+  .fader-lbl{font-size:.78rem; color:var(--muted); flex-shrink:0;}
+  .fader-val{min-width:64px; text-align:right; color:var(--gold); font-weight:bold; font-size:.85rem;}
+
+  /* ===== デスクトップ(幅700px+):下部固定を解除して自然なフローに ===== */
+  @media (min-width: 700px){
+    html,body{overflow:auto; height:auto;}
+    .app{height:auto; min-height:100vh;}
+    #content{flex:0 0 auto; overflow-y:visible;}
+    #abar{max-height:none; overflow-y:visible; position:static; padding-bottom:24px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>♠ ポーカー特訓道場<small>知識×判断 v2.1</small></h1>
+    <div class="chips">
+      <div class="chip">レート <b id="rating">1200</b></div>
+      <div class="chip">XP <b id="xp">0</b></div>
+      <div class="chip">連続 <b class="streak-b" id="streak">0</b></div>
+    </div>
+  </header>
+  <nav id="catnav"></nav>
+  <main id="content"></main>
+  <div id="abar"></div>
+</div>
+
+<script>
+// ===== 問題バンク =====
+// grade: best(最善) / ok(許容) / miss(ミス) / blunder(大ミス)
+const CATS = {
+  odds:  "オッズ&アウツ",
+  open:  "オープンレンジ",
+  push:  "プッシュ/フォールド",
+  icm:   "ICM&バブル"
+};
+
+const SCENARIOS = [
+// ---------- オッズ&アウツ ----------
+{
+  cat:"odds", level:1, title:"フラッシュドロー vs ポットベット",
+  situ:["トーナメント中盤、6人テーブル。", "ターン。ポット 6,000。相手が 6,000(ポットサイズ)をベット。", "あなたはフラッシュドロー(あと1枚でフラッシュ完成)。"],
+  hero:["Ah","9h"], board:["Kh","7h","2s","Jd"],
+  opts:[
+    {label:"フォールド", grade:"best", note:"オッズに合わない"},
+    {label:"コール", grade:"miss", note:"必要勝率に届かない"},
+    {label:"オールイン", grade:"blunder", note:"根拠のないブラフ化"}
+  ],
+  exp:"コールに必要な勝率 = 6,000 ÷ (6,000+6,000+6,000) = 33.3%。フラッシュのアウツは9枚で、リバー1枚で引ける確率は 9/46 ≈ 19.6%。33.3%に大きく届かないのでフォールドが最善です。相手のスタックが深く、引けたら大きく回収できる(インプライドオッズ)場合のみコールが正当化されますが、ポットサイズベットに対しては通常足りません。",
+  pr:"必要勝率 = コール額 ÷ (ポット+ベット+コール額)。ドローの勝率がこれを下回るならフォールド。"
+},
+{
+  cat:"odds", level:1, title:"オープンエンド vs 小さいベット",
+  situ:["トーナメント序盤、9人テーブル。", "フロップ。ポット 4,000。相手が 1,000(1/4ポット)をベット。", "あなたはオープンエンドストレートドロー(8アウツ)。"],
+  hero:["Ts","9s"], board:["8d","7c","2h"],
+  opts:[
+    {label:"コール", grade:"best", note:"オッズが十分"},
+    {label:"レイズ(セミブラフ)", grade:"ok", note:"戦略としては有効"},
+    {label:"フォールド", grade:"miss", note:"好オッズを捨てている"}
+  ],
+  exp:"必要勝率 = 1,000 ÷ (4,000+1,000+1,000) ≈ 16.7%。8アウツはターン1枚だけでも 8/47 ≈ 17% あり、引けた場合の追加回収(インプライドオッズ)を考えれば明確なコールです。セミブラフレイズも「今降ろして勝つ+引いて勝つ」の2つの勝ち筋があり許容ですが、基本はコールで十分。フォールドだけが明確な間違いです。",
+  pr:"小さいベットに対して良いドローは基本降りない。1/4ポットのベットに必要な勝率は約17%しかない。"
+},
+{
+  cat:"odds", level:1, title:"AAでのプリフロップ判断",
+  situ:["トーナメント序盤。相手が先にオールイン(あなたのスタックをカバー)。", "あなたの手札は AA。"],
+  hero:["As","Ad"], board:[],
+  opts:[
+    {label:"コール", grade:"best", note:"常に正解"},
+    {label:"フォールド", grade:"blunder", note:"最強の手を捨てる"}
+  ],
+  exp:"AAはプリフロップ最強で、ランダムハンド相手に約85%、相手が最強クラスのKKでも約81%の勝率があります。プリフロップでAAがオールインに対して降りる状況は(特殊なサテライト等を除き)存在しません。「大事に行き過ぎて降りる」のはトーナメント初心者の典型的な大ミスです。",
+  pr:"AAのプリフロップオールインコールは思考不要。例外は後で学ぶサテライトのICM極限のみ。"
+},
+{
+  cat:"odds", level:2, title:"ガットショット vs 2/3ポット",
+  situ:["トーナメント中盤。ターン。ポット 9,000。相手が 6,000(2/3ポット)をベット。", "あなたはガットショット(中抜きストレート、4アウツ)のみ。"],
+  hero:["Jc","Tc"], board:["8s","Qd","3h","2c"],
+  opts:[
+    {label:"フォールド", grade:"best", note:"オッズが全く合わない"},
+    {label:"コール", grade:"miss", note:"約9%で29%のコールをしている"},
+    {label:"レイズ(ブラフ)", grade:"blunder", note:"根拠のない大きなリスク"}
+  ],
+  exp:"必要勝率 = 6,000 ÷ (9,000+6,000+6,000) ≈ 28.6%。ガットショットはリバー1枚で 4/46 ≈ 8.7% しかなく、3倍以上足りません。この差はインプライドオッズでは埋まりません。またこのボードでのブラフレイズは、相手のレンジや自分のブロッカーの裏付けがない限り単なる浪費です。",
+  pr:"4アウツは約9%。ガットショット単体は小さいベット以外ほぼ全部フォールド。"
+},
+{
+  cat:"odds", level:2, title:"コンボドロー vs オールイン",
+  situ:["トーナメント中盤。フロップ。ポット 5,000。相手が 5,000をオールイン。", "あなたはフラッシュドロー+オープンエンド(15アウツ)。"],
+  hero:["Th","9h"], board:["8h","7h","2c"],
+  opts:[
+    {label:"コール", grade:"best", note:"実はあなたが有利"},
+    {label:"フォールド", grade:"miss", note:"勝率54%を捨てている"}
+  ],
+  exp:"フラッシュ9アウツ+ストレート8アウツ−重複2枚 = 15アウツ。残り2枚で引ける確率は約54%で、相手がすでにワンペアでもあなたが「有利」です。必要勝率は 5,000 ÷ 15,000 = 33.3% なので大幅に上回ります。強いコンボドローは「まだ何もできていない」ように見えて、実質モンスターハンドです。",
+  pr:"15アウツ2枚 ≈ 54%。強いコンボドローはフロップでは実質ナッツ級として扱う。"
+},
+{
+  cat:"odds", level:3, title:"ペアボードでのドロー(アウツの割引)",
+  situ:["トーナメント中盤。ターン。ポット 8,000。相手が 8,000(ポットサイズ)をベット。", "ボードはペアボード。あなたはフラッシュドロー(名目9アウツ)。"],
+  hero:["Qd","Jd"], board:["Ks","Kd","7d","3c"],
+  opts:[
+    {label:"フォールド", grade:"best", note:"割引後のアウツでは全く足りない"},
+    {label:"コール", grade:"miss", note:"名目アウツを鵜呑みにしている"}
+  ],
+  exp:"必要勝率は33.3%、名目のフラッシュ確率は約19.6%でそもそも足りませんが、さらに重要なのは「ペアボードではアウツを割引する」ことです。相手がトリップスやフルハウスなら、フラッシュを引いても負けます(リバーでボードがもう一度ペアになればフルハウスに逆転される)。実効アウツは9枚より確実に少なく、実質15%前後。二重に足りません。",
+  pr:"ペアボードではフラッシュ/ストレートのアウツを割り引く。「引いても負ける」アウツは数えない。"
+},
+
+// ---------- オープンレンジ ----------
+{
+  cat:"open", level:1, title:"UTGのA5オフスート",
+  situ:["トーナメント序盤、9人テーブル、スタック60bb。", "あなたはUTG(最初に行動する席)。全員まだアクションしていません。"],
+  hero:["Ah","5c"], board:[],
+  opts:[
+    {label:"フォールド", grade:"best", note:"最初の席では弱すぎる"},
+    {label:"レイズ(2.2bb)", grade:"miss", note:"後ろに8人いる席では損"},
+    {label:"リンプ(コールで参加)", grade:"blunder", note:"リンプは原則禁止"}
+  ],
+  exp:"エースでも、キッカー(2枚目)が弱いオフスートのエースはUTGでは明確なフォールドです。後ろに8人おり、誰かがより強いエース(AK〜A9)を持っている確率が高く、エースが当たっても「勝っているか分からないトップペア」になりがちです(逆ドミネーション)。またリンプはほぼ全ての状況で「レイズかフォールドか」に劣ります。",
+  pr:"ポジションが早いほどタイトに。A2o〜A8oはUTGでは全部フォールドが基本形。"
+},
+{
+  cat:"open", level:1, title:"ボタンのK9スーテッド",
+  situ:["トーナメント序盤、9人テーブル、スタック50bb。", "全員フォールドであなたのボタン(最有利ポジション)に回ってきました。"],
+  hero:["Kd","9d"], board:[],
+  opts:[
+    {label:"レイズ(2.2bb)", grade:"best", note:"ボタンは広く開ける"},
+    {label:"フォールド", grade:"miss", note:"最有利席の価値を捨てている"},
+    {label:"リンプ", grade:"blunder", note:"主導権もポジション利益も放棄"}
+  ],
+  exp:"ボタンはポストフロップで常に最後に行動できる最強の席で、残る相手はブラインドの2人だけです。この条件ではK9sは余裕でレイズできます(ボタンの標準オープンレンジは全ハンドの40〜50%)。ポジションの価値をチップに変換するのがトーナメントの基礎収益源です。",
+  pr:"オープンレンジはポジションで決まる。UTGは狭く(約15%)、ボタンは広く(約45%)。"
+},
+{
+  cat:"open", level:1, title:"COのAQオフスート",
+  situ:["トーナメント序盤、9人テーブル、スタック60bb。", "全員フォールドであなたのCO(ボタンの1つ手前)に回ってきました。"],
+  hero:["Ac","Qh"], board:[],
+  opts:[
+    {label:"レイズ(2.2bb)", grade:"best", note:"標準のバリューオープン"},
+    {label:"リンプ", grade:"miss", note:"強い手ほどレイズすべき"},
+    {label:"フォールド", grade:"blunder", note:"上位5%の手を捨てている"}
+  ],
+  exp:"AQoは全ハンド中上位5%前後の強いハンドで、COからは全ポジション共通で明確なレイズです。「強い手で罠を張るリンプ」は、ポットを育てられず、相手に無料でフロップを見せ、自分のレンジ全体を弱くする三重の損です。",
+  pr:"参加するならレイズ。リンプが正当化される状況はトーナメントではごく僅か。"
+},
+{
+  cat:"open", level:2, title:"BBのディフェンス判断",
+  situ:["トーナメント中盤、スタック40bb。", "ボタンが2bbにミニレイズ、SBはフォールド。あなたはBB。", "コールに必要なのは追加1bbだけ(クローズアクション)。"],
+  hero:["8s","6s"], board:[],
+  opts:[
+    {label:"コール", grade:"best", note:"破格のオッズ"},
+    {label:"3ベット(ブラフ)", grade:"ok", note:"頻度の一部としては有効"},
+    {label:"フォールド", grade:"miss", note:"オッズ良すぎて降りられない"}
+  ],
+  exp:"ポットには既に4.5bb(自分のBB含む)があり、追加1bbで参加できる=必要勝率は約18%です。86sのようなスーテッドコネクター気味の手は、ボタンの広いレンジに対して十分な勝率とプレイアビリティがあります。BBはミニレイズに対してかなり広く守るのが現代の標準です。",
+  pr:"BBはクローズアクション+割引価格。ミニレイズには「見た目より圧倒的に広く」ディフェンスする。"
+},
+{
+  cat:"open", level:2, title:"SBの72オフスート",
+  situ:["トーナメント序盤。前に2人がリンプ(コール参加)。", "あなたはSB。追加0.5bbでフロップを見られます。"],
+  hero:["7h","2c"], board:[],
+  opts:[
+    {label:"フォールド", grade:"best", note:"最弱ハンドは激安でも捨てる"},
+    {label:"コンプリート(0.5bb追加)", grade:"miss", note:"安くても回収できない"},
+    {label:"レイズ", grade:"blunder", note:"複数リンパーに最弱ハンドで突っ込む"}
+  ],
+  exp:"オッズは7:1と破格ですが、72oはポーカー最弱クラスの手です。当たっても「弱いペア+最悪キッカー」で、しかも全ラウンドで最初に行動する最悪のポジション。良いオッズは「安く参加できる」ことしか保証せず、「参加後に利益が出る」ことは保証しません。プレイアビリティの無い手は激安でも捨てます。",
+  pr:"価格が安いことと、参加してEVが出ることは別問題。ポジション最悪+最弱ハンドは常にフォールド。"
+},
+{
+  cat:"open", level:3, title:"中盤ポジションのポケット2",
+  situ:["トーナメント序盤、9人テーブル、スタック40bb。", "全員フォールドであなたのMP(中盤の席)に回ってきました。"],
+  hero:["2s","2d"], board:[],
+  opts:[
+    {label:"レイズ(2.2bb)", grade:"best", note:"境界線上だがレイズ寄り"},
+    {label:"フォールド", grade:"ok", note:"タイトな判断としては許容"},
+    {label:"リンプ(セットマイン)", grade:"miss", note:"リンプの癖は長期的に高くつく"}
+  ],
+  exp:"最小ポケットペアの22は、MPからだとちょうど境界線上のハンドです。セット(3枚目の2)を引く確率はフロップで約12%しかなく、引けなければほぼ勝てません。40bbあればセットを引いた時の回収が見込めるためレイズ寄りですが、フォールドも規律ある選択として許容です。一番良くないのは「安く見たいからリンプ」という発想が習慣化することです。",
+  pr:"小ポケットペアの価値はほぼセット期待値。スタックが浅いほど価値が下がる(回収余地が減る)。"
+},
+
+// ---------- プッシュ/フォールド ----------
+{
+  cat:"push", level:1, title:"SB 8bbのK7オフスート",
+  situ:["トーナメント終盤、残り8bb。ブラインド500/1,000。", "全員フォールドであなたのSBに回ってきました。相手はBBの1人だけ。"],
+  hero:["Kc","7d"], board:[],
+  opts:[
+    {label:"オールイン", grade:"best", note:"ナッシュ均衡の明確なプッシュ"},
+    {label:"フォールド", grade:"miss", note:"ブラインドに削られて先細り"},
+    {label:"レイズ(2bb)", grade:"miss", note:"降りられないサイズを2段階に割る意味がない"}
+  ],
+  exp:"SB 8bbからのK7oは、数学的に解かれたナッシュ均衡で明確なオールインです(SBの8bbプッシュレンジは全ハンドの約6割に及びます)。相手が完璧に対応してきても利益が出る「解のある領域」で、ここでの遠慮は純粋な損失です。また8bbで小さくレイズすると、オールインを返された時に困り、フォールドすればスタックの1/4を無駄にします。",
+  pr:"10bb以下は基本「オールインかフォールドか」の二択。SBのプッシュレンジは驚くほど広い。"
+},
+{
+  cat:"push", level:1, title:"UTG 10bbのQ9スーテッド",
+  situ:["トーナメント終盤、9人テーブル、残り10bb。", "あなたはUTG。後ろに8人が控えています。"],
+  hero:["Qh","9h"], board:[],
+  opts:[
+    {label:"フォールド", grade:"best", note:"9人テーブルの先頭では足りない"},
+    {label:"オールイン", grade:"miss", note:"UTGのナッシュレンジ外"},
+    {label:"レイズ(2bb)", grade:"blunder", note:"10bbでレイズ・フォールドは最悪"}
+  ],
+  exp:"同じ10bbでも、SBなら広くプッシュできるQ9sが、UTGではフォールドです。後ろに8人いると誰かがコールできる強い手を持っている確率が高く、UTG 10bbのナッシュプッシュレンジは狭い(小〜中ポケットペア、強いエース、KQ級まで)。ポジションがプッシュレンジを決める、という原則の典型例です。",
+  pr:"プッシュレンジは「後ろに残っている人数」で決まる。UTGは狭く、SB/ボタンは広く。"
+},
+{
+  cat:"push", level:2, title:"ボタン 10bbのA2スーテッド",
+  situ:["トーナメント終盤、残り10bb。", "全員フォールドであなたのボタンに回ってきました。残る相手はブラインド2人。"],
+  hero:["As","2s"], board:[],
+  opts:[
+    {label:"オールイン", grade:"best", note:"どんなエースでもプッシュ"},
+    {label:"レイズ(2.2bb)", grade:"ok", note:"上級者の混合戦略としては存在"},
+    {label:"フォールド", grade:"miss", note:"ブロッカー価値を捨てている"}
+  ],
+  exp:"ボタン10bbなら、A2sを含む「全てのエース」がナッシュ均衡上のプッシュです。エースを持っていること自体が、相手がAK等の強い手でコールできる確率を下げる(ブロッカー効果)ため、見た目以上に安全なオールインになります。小さくレイズする戦略も上級では存在しますが、まずはシンプルにプッシュで正解です。",
+  pr:"終盤のAxはブロッカーとして働く。ボタン10bb以下でエースを降りることはない。"
+},
+{
+  cat:"push", level:2, title:"BBのコール判断(vs SBオールイン)",
+  situ:["トーナメント終盤。SBが10bbをオールイン。あなたはBB(相手をカバー)。", "SBは知識のある熟練プレイヤーです。"],
+  hero:["Ad","Th"], board:[],
+  opts:[
+    {label:"コール", grade:"best", note:"広いプッシュレンジに対して十分強い"},
+    {label:"フォールド", grade:"miss", note:"相手のレンジを過大評価"}
+  ],
+  exp:"熟練者がSB 10bbからプッシュするナッシュレンジは全ハンドの5〜6割と非常に広いです。ATはその広いレンジに対して約60%の勝率があり、必要勝率(約42%)を大きく上回る明確なコールです。「オールイン=強い」という直感は、浅いスタックの終盤では通用しません。相手の席と残りチップからレンジを推定するのが正しい思考です。",
+  pr:"コール判断は「相手のプッシュレンジ対自分の手」の勝率で決める。終盤のSBプッシュは弱い手だらけ。"
+},
+{
+  cat:"push", level:2, title:"CO 10bbのポケット6",
+  situ:["トーナメント終盤、残り10bb。", "全員フォールドであなたのCOに回ってきました。"],
+  hero:["6c","6h"], board:[],
+  opts:[
+    {label:"オールイン", grade:"best", note:"中ポケットの標準プッシュ"},
+    {label:"フォールド", grade:"miss", note:"明確なレンジ内をフォールド"},
+    {label:"リンプ", grade:"blunder", note:"10bbでのリンプはほぼ常に最悪"}
+  ],
+  exp:"ポケットペアは「コールされてもだいたいコインフリップ以上、降ろせれば丸儲け」という性質があり、プッシュに最適な手です。66はCO 10bbで余裕のオールイン(実際は22でもプッシュです)。中途半端に関わって判断の難しいフロップを迎えるより、プリフロップで全圧力をかけるのが浅いスタックの正解です。",
+  pr:"ポケットペアはプッシュ向きの手。浅いスタックの小〜中ペアは「降ろせる+捲れる」の二刀流。"
+},
+{
+  cat:"push", level:3, title:"HJ 10bbのKQオフスート",
+  situ:["トーナメント終盤、9人テーブル、残り10bb。", "あなたはHJ(COの1つ手前)。後ろに5人が控えています。"],
+  hero:["Kh","Qc"], board:[],
+  opts:[
+    {label:"オールイン", grade:"best", note:"ナッシュレンジ内の標準プッシュ"},
+    {label:"フォールド", grade:"miss", note:"タイトすぎる"},
+    {label:"レイズ(2.2bb)", grade:"miss", note:"オールインを返されて困るだけ"}
+  ],
+  exp:"KQoはHJ 10bbのナッシュプッシュレンジに入ります。コールされてもAx相手で約38%、ペア相手でも捲る目があり、そもそも全員に降りてもらえれば1.5bb(スタックの15%)を無リスクで獲得できます。この「フォールドエクイティ+捲り得」の合算がプッシュの利益の正体です。UTGなら同じ手がフォールドになる点も再確認を。",
+  pr:"プッシュの利益 = 降ろして取るブラインド + コールされた時の勝率。どちらか片方では測らない。"
+},
+
+// ---------- ICM&バブル ----------
+{
+  cat:"icm", level:2, title:"バブルでのAJoコール判断",
+  situ:["残り19人、入賞は18人(バブル真っ只中)。", "あなたはBB、スタック22bb(平均的)。", "チップリーダー(60bb、あなたをカバー)がボタンからオールイン。あなたに回ってきました。"],
+  hero:["Ac","Jh"], board:[],
+  opts:[
+    {label:"フォールド", grade:"best", note:"ICMがコールを禁止する典型例"},
+    {label:"コール", grade:"blunder", note:"チップEVでは正しくても賞金EVで大損"}
+  ],
+  exp:"チップの期待値だけならAJoは広いオールインに対してコールできます。しかしバブルでは「失うチップは得るチップより価値が重い」というICMの歪みが最大化します。負ければ入賞(確定賞金)を目前に0円、勝っても賞金額はすぐには増えません。リスクとリターンが賞金ベースで非対称なため、AJo程度では全く足りず、QQ+/AK級まで絞るのが正解です。チップリーダーはまさにこの状況を狙って広くプッシュしています。",
+  pr:"バブルの中間スタックは大幅にタイトが正解。「チップで正しい」と「賞金で正しい」は別物。"
+},
+{
+  cat:"icm", level:2, title:"バブルのビッグスタック",
+  situ:["残り19人、入賞は18人。あなたはチップリーダー(70bb)。", "ブラインドの2人はどちらも15〜20bbの中間スタック。", "全員フォールドであなたのボタンに回ってきました。"],
+  hero:["Ah","4c"], board:[],
+  opts:[
+    {label:"レイズ(2.2bb)", grade:"best", note:"ICM圧力の搾取"},
+    {label:"フォールド", grade:"ok", note:"消極的だが損失は小さい"},
+    {label:"オールイン", grade:"miss", note:"取れる結果は同じでリスクだけ過大"}
+  ],
+  exp:"前問の裏側です。中間スタックはICMのせいで「降りざるを得ない」状態なので、ビッグスタックのあなたはA4oのような手でも(理論上はもっと広くでも)レイズしてブラインドを刈り続けられます。これがバブルにおける最大の構造的エクスプロイトです。ただしオールインまで行く必要はありません。小さいレイズで同じフォールドを引き出せるのに、コールされた時だけ大怪我するサイズを選ぶのは非効率です。",
+  pr:"バブルのビッグスタックは「相手が降りるしかない」構造を毎ハンド換金する。サイズは最小限で十分。"
+},
+{
+  cat:"icm", level:3, title:"瀕死のスタックを待つ",
+  situ:["残り19人、入賞は18人。別テーブルに残り1bbのプレイヤーがいて、次のハンドで強制的にBBを払います。", "あなたはBB、スタック15bb。UTG(18bb)がオールイン。あなたに回ってきました。"],
+  hero:["As","Qs"], board:[],
+  opts:[
+    {label:"フォールド", grade:"best", note:"待てばほぼ確定で入賞"},
+    {label:"コール", grade:"miss", note:"取らなくていいリスクを取っている"}
+  ],
+  exp:"AQsは強い手で、通常なら喜んでコールです。しかし今は「他のプレイヤーが数分以内にほぼ確実に飛ぶ」状況で、あなたは何もしなければ高確率で入賞が確定します。コールして負ければその権利を自分から捨てることになります。AQsはUTGの狭いオールインレンジ(強いペアとAK中心)に対しては実はコインフリップ以下、という点も重なります。ここでのフォールドは弱気ではなく計算です。",
+  pr:"バブルでは自分の手札より先に「誰が先に飛びそうか」を確認する。待つことが最高のプレイになる場面がある。"
+},
+{
+  cat:"icm", level:3, title:"サテライトのQQ(最重要問題)",
+  situ:["サテライト(上位10人が全員同じ賞品=本戦シートを獲得。11位以下は0)。", "残り11人。あなたは2番手の大スタックで、ブラインドが上がっても余裕で逃げ切れます。", "チップリーダーがオールイン。あなたはBBでQQ。"],
+  hero:["Qd","Qc"], board:[],
+  opts:[
+    {label:"フォールド", grade:"best", note:"勝っても賞品は増えない"},
+    {label:"コール", grade:"blunder", note:"サテライト史上最も高くつくコール"}
+  ],
+  exp:"ICMの極限です。サテライトでは1位も10位も賞品が同じなので、チップを増やすことに追加の価値がほぼありません。あなたは既に「ほぼ確定でシート獲得」の位置にいて、コールして勝っても得るものがなく、負ければ全てを失います。この状況ではQQどころか、理論上はAAですらフォールドが正解になり得ます(勝率約81%でも、残り19%で確定シートを失うリスクに見合わない)。「手の強さ」ではなく「賞金構造」が答えを決める究極の例です。",
+  pr:"サテライトの終盤は手札を見る前に賞金構造を見る。増やす価値ゼロ+失う価値最大=ほぼ全部フォールド。"
+},
+{
+  cat:"icm", level:2, title:"バブルの最短スタック",
+  situ:["残り19人、入賞は18人。あなたはSBで残り5bb(テーブル最短)。", "全員フォールドであなたに回ってきました。相手はBBのみ(あなたをカバー)。"],
+  hero:["Ah","8d"], board:[],
+  opts:[
+    {label:"オールイン", grade:"best", note:"待つ余裕がない側の正解"},
+    {label:"フォールド", grade:"miss", note:"ブラインドで自然死するだけ"},
+    {label:"リンプ", grade:"blunder", note:"5bbで中途半端は自殺行為"}
+  ],
+  exp:"同じバブルでも、あなたが最短スタックなら話は逆です。5bbはあと数周でブラインドに消滅する量で、「待って入賞」の選択肢が既にありません。A8oはBB1人に対するオールインとしては十分すぎる強さで、降りてもらえればスタックが3割増えます。中間スタック(前々問)とビッグスタック(前問)と最短スタック(本問)で、同じバブルでも正解が正反対になることを体感してください。",
+  pr:"ICM調整の方向はスタックポジションで決まる。中間=タイトに、大=アグレッシブに、短=先に動く。"
+},
+{
+  cat:"icm", level:3, title:"ファイナルテーブルのペイジャンプ",
+  situ:["ファイナルテーブル残り4人。賞金:4位50万/3位80万/2位120万/1位200万。", "別に6bbの最短スタックが1人います。あなたは2番手(25bb)でBB。", "チップリーダーがSBからオールイン(あなたをカバー)。"],
+  hero:["8h","8c"], board:[],
+  opts:[
+    {label:"フォールド", grade:"best", note:"ラダーを上る価値がコールを上回る"},
+    {label:"コール", grade:"miss", note:"88の強さ以上に状況が悪い"}
+  ],
+  exp:"88はチップ上はコールできる手ですが、状況が三重に悪い:(1)相手は自分をカバーするチップリーダー、(2)6bbの最短スタックが先に飛べば無条件で+30万円(3位確定)、(3)負ければ50万で終了。ペイジャンプが大きいFTでは「先に誰かが飛ぶのを待つ」価値が具体的な金額として存在し、それがコールのEVから差し引かれます(いわゆるICM税)。チップリーダーもそれを知っていて広く押してきますが、それでも降りるのが正解、というのがICMの厳しさです。",
+  pr:"FTでは「このコールのICM税はいくらか」を考える。カバーされている時のマージナルコールは厳禁。"
+}
+];
+
+// ===== 用語集(問題に関係する語のみ解答後に表示) =====
+const GLOSSARY = [
+ {t:"EV(期待値)", k:["EV","期待値"], d:"その選択を無限回繰り返した時の平均損益。1回の結果ではなくEVで判断を評価する。"},
+ {t:"GTO", k:["GTO"], d:"相手がどう対応しても搾取されない均衡戦略。基準線として学び、甘い相手には意図的にズラす。"},
+ {t:"ナッシュ均衡", k:["ナッシュ"], d:"お互いが戦略を変えても得しなくなる均衡点。浅いスタックのプッシュ/フォールドは数学的に解が確立している。"},
+ {t:"ICM", k:["ICM"], d:"チップ量を賞金期待値(金額)に換算するモデル。チップの価値は線形でなく「失う1枚は得る1枚より重い」。"},
+ {t:"ICM税", k:["ICM税"], d:"賞金構造が理由でコール等のEVから差し引かれる目減り分。"},
+ {t:"エクイティ(勝率)", k:["エクイティ"], d:"今オールインした場合にポットを獲得できる確率。"},
+ {t:"アウツ", k:["アウツ"], d:"自分の手を勝ちに変える残りカードの枚数。フラッシュドロー=9、OESD=8、ガットショット=4。"},
+ {t:"ルールオブ4と2", k:["ルールオブ"], d:"アウツ×4=残り2枚での概算勝率、アウツ×2=残り1枚での概算勝率。"},
+ {t:"ポットオッズ/必要勝率", k:["必要勝率","必要な勝率","ポットオッズ","オッズ"], d:"必要勝率=コール額÷(ポット+ベット+コール額)。ドローの勝率がこれを下回るならフォールド。"},
+ {t:"インプライドオッズ", k:["インプライド"], d:"ドロー完成後に相手からさらに取れる分を含めた実質的なオッズ。"},
+ {t:"MDF(最低防御頻度)", k:["MDF"], d:"搾取されないために最低限守るべきレンジの割合。ポット÷(ポット+ベット)。"},
+ {t:"フォールドエクイティ", k:["フォールドエクイティ"], d:"ベットやオールインで相手を降ろして得る利益。プッシュの利益=これ+コールされた時の勝率。"},
+ {t:"レンジ", k:["レンジ"], d:"ある状況で持ちうるハンドの集合。相手の手を1つに決めつけず、レンジ対レンジで考える。"},
+ {t:"プッシュ/フォールド", k:["プッシュ"], d:"スタック10bb以下で「オールインか降りるか」の二択に単純化する戦略領域。"},
+ {t:"ブロッカー", k:["ブロッカー"], d:"自分の手札が相手の強い手の組み合わせを減らす効果。例:Aを持つと相手がAAやAKである確率が下がる。"},
+ {t:"ドミネート", k:["ドミネート","キッカー"], d:"キッカー違いで支配されている状態(AQ vs AK等)。支配された側の勝率は約25%。"},
+ {t:"バブル", k:["バブル"], d:"あと1人飛べば全員入賞という境目。ICMの歪みが最大化し、スタック量で正解が正反対になる。"},
+ {t:"ペイジャンプ", k:["ペイジャンプ"], d:"順位が1つ上がった時の賞金の増分。"},
+ {t:"サテライト", k:["サテライト"], d:"上位N人が同じ賞品を得る形式。チップを増やす価値がほぼ消え、AAすら降りる状況が生じる。"},
+ {t:"カバー", k:["カバー"], d:"相手のスタックが自分より多い状態。「カバーされている」=負けたら自分が飛ぶ。"},
+ {t:"ポジション", k:["ポジション"], d:"座席順のこと。プリフロップはUTG→HJ→CO→BTN→SB→BBの順だが、フロップ以降は毎回SB→BB→…→BTNへと順番が変わり、ブラインドが最初・ボタンが最後になる。後で行動できる席ほど有利。"},
+ {t:"UTG", k:["UTG"], d:"アンダー・ザ・ガン。プリフロップで最初に行動する最も不利な席。後ろに全員が控えているため参加レンジは最も狭い(約14%)。"},
+ {t:"HJ(ハイジャック)", k:["HJ"], d:"ボタンの2つ手前の席。中盤ポジションで、レンジの広さはUTGとCOの中間。"},
+ {t:"CO(カットオフ)", k:["CO"], d:"ボタンの1つ手前、2番目に有利な席。ここから参加レンジが一気に広がる(オープン目安約26%)。名前は「ボタンの有利さを切り取る(cut off)」に由来。"},
+ {t:"SB(スモールブラインド)", k:["SB"], d:"強制ベット0.5bbを払う席。ポストフロップでは常に最初に行動する不利な席だが、終盤に全員フォールドで回ってきた時は最も広くプッシュできる。"},
+ {t:"BB(ビッグブラインド)", k:["BB"], d:"強制ベット1bbを払う席。プリフロップでは最後に行動でき、既に1bb入っているため割引価格で広く守れる。"},
+ {t:"ボタン(BTN)", k:["ボタン","BTN"], d:"ディーラーボタンの席。ポストフロップで常に最後に行動できる最有利ポジション。ボタンは毎ハンド時計回りに移動する。オープンレンジも全ポジション中で最も広い(約45%)。"},
+ {t:"bb", k:["bb"], d:"ビッグブラインド換算のスタック単位。「25bb」=BB25個分。"},
+ {t:"リンプ", k:["リンプ","リンパー"], d:"レイズせずBB額だけコールして参加すること。原則禁じ手。"},
+ {t:"3ベット", k:["3ベット"], d:"オープンレイズへの再レイズ。ライブでは理論より大幅に強い手に偏る。"},
+ {t:"OESD/ガットショット", k:["OESD","オープンエンド","ガットショット","中抜き"], d:"ストレートドローの2種。OESD=両端(8アウツ)、ガットショット=中抜き(4アウツ)。"},
+ {t:"コンボドロー", k:["コンボ"], d:"フラッシュドロー+ストレートドローの複合(15アウツ前後)。実質モンスター。"},
+ {t:"セット", k:["セット"], d:"ポケットペアがボードの1枚と合わさった3カード。フロップで引ける確率は約12%。"},
+ {t:"SPR", k:["SPR"], d:"スタック÷ポット比。小さいほど全力投入の基準が下がる。"},
+ {t:"フロップ", k:["フロップ"], d:"最初に同時に開かれる3枚の共通カード(とその判断局面)。ここからボードとレンジの相性評価が始まる。"},
+ {t:"ターン", k:["ターン"], d:"4枚目の共通カード。ボードの景色が変わるため、フロップで決めた手の分類(バリュー/マージナル等)を再評価する局面。"},
+ {t:"リバー", k:["リバー"], d:"5枚目=最後の共通カード。以降ドローは存在せず勝敗は確定済みなので、判断は純粋な「バリューかブラフか」の二択に整理される。"},
+ {t:"ポットサイズ", k:["ポットサイズ"], d:"現在ポットにあるチップの総量。ベットの大きさは金額でなく「ポットに対する割合」(1/2ポット等)で考える。ポットサイズベット=ポットと同額のベット。"},
+ {t:"ベット", k:["ベット"], d:"チップを賭ける行動。目的は「バリュー(劣る手にコールさせる)」か「ブラフ(勝る手を降ろす)」の2つだけで、どちらでもないベットは原則打たない。"},
+ {t:"ブラフ", k:["ブラフ"], d:"勝っていない手で相手を降ろすためのベット/レイズ。損益分岐フォールド率=ベット額÷(ベット額+ポット)。ドロー付きならセミブラフと呼び、2つの勝ち筋を持つ。"},
+ {t:"オープン(オープンレイズ)", k:["オープン"], d:"誰も参加していないポットに最初にレイズで入ること。「全員フォールドで回ってきた時にどの手で開けるか」がポジション別オープンレンジ。"},
+ {t:"コールドコール", k:["コールドコール"], d:"自分がまだチップを入れていない状態で、他人のレイズにコールで参加すること。向くのはペア・スーテッド系の実現性が高い手で、オフスートブロードウェイは不向き。"}
+];
+function glossHTML(text){
+  const hits = GLOSSARY.filter(g=>g.k.some(k=>text.includes(k))).slice(0,8);
+  if(!hits.length) return "";
+  return `<details class="q-gloss" open><summary>📖 関連用語(前提知識)</summary><div class="qg-body">${
+    hits.map(g=>`<div class="fg-item"><b>${g.t}</b> — ${g.d}</div>`).join("")}</div></details>`;
+}
+
+// 不正解時に表示する思考手順(タイトルで対応付け)
+const LEARN = {
+"フラッシュドロー vs ポットベット":"①必要勝率=6,000÷18,000=33% ②アウツ9枚×2=約20%(残り1枚) ③20%<33%→フォールド。よくある誤解:「ここまで来たから」はサンクコストで、判断材料にならない。",
+"オープンエンド vs 小さいベット":"①必要勝率=1,000÷6,000=17% ②8アウツ×2=17%で互角+引けた時の追加回収→コール。誤解:「ドローは降りるもの」ではなく、価格次第で決まる。",
+"AAでのプリフロップ判断":"AAがプリフロップで不利になる相手は存在しない(最悪でもKK相手に約81%)。誤解:「トーナメントでは無理しない」——AAに慎重さは不要。",
+"ガットショット vs 2/3ポット":"①必要勝率=6,000÷21,000=29% ②4アウツ×2=9% ③3倍以上足りない→フォールド。誤解:ストレートドローを一律8アウツと数える(中抜きは4枚だけ)。",
+"コンボドロー vs オールイン":"①アウツ=9+8−重複2=15 ②15×4=60%(正確54%) ③必要33%を大幅超過→コール。誤解:「まだ何も完成していない」と過小評価する。",
+"ペアボードでのドロー(アウツの割引)":"①名目9アウツ×2=20%で必要33%に既に不足 ②ペアボード=引いても負けるルートがあるため実効アウツはさらに減る。誤解:アウツを額面通り数える。",
+"UTGのA5オフスート":"①UTG=後ろに8人 ②弱キッカーのAは当たっても2番手になりやすい(逆ドミネーション)→フォールド。誤解:「エースだから参加」はポジションを無視している。",
+"ボタンのK9スーテッド":"①ボタン=残る相手はブラインド2人+常に最後に行動 ②K9sはボタンの標準レンジ(約45%)内→レイズ。ポジション価値をチップに変えるのが基礎収益。",
+"COのAQオフスート":"①AQoは全体の上位5% ②強い手はレイズしてポットを育てる。リンプは主導権・情報・ポットの三重放棄。",
+"BBのディフェンス判断":"①既に4.5bbのポットへ追加1bbのみ=必要18% ②86sは広いBTNレンジに対し十分→コール。誤解:手の絶対的な強さだけで見て、破格の価格を無視する。",
+"SBの72オフスート":"①価格は7:1と激安 ②しかし72o=最弱ハンド+全ラウンド最初に行動 ③安く参加できる≠参加して儲かる→フォールド。",
+"中盤ポジションのポケット2":"①小ペアの価値≒セット期待値(フロップで約12%) ②40bbなら引けた時の回収が見合う→レイズ寄り。最悪なのは「安く見たい」リンプの習慣化。",
+"SB 8bbのK7オフスート":"①SB8bbのナッシュレンジは約6割 ②K7oは余裕で範囲内→オールイン。誤解:「弱いから待つ」——ブラインドに削られる損失を無視している。",
+"UTG 10bbのQ9スーテッド":"①後ろに8人=強い手にぶつかる確率が高い ②UTGのプッシュレンジは狭い(中ペア+強エース中心)→フォールド。同じ手でもSBならプッシュ。",
+"ボタン 10bbのA2スーテッド":"①BTN10bbは全エースがプッシュ ②Aのブロッカー効果で相手の強いコール手が減る→オールイン。",
+"BBのコール判断(vs SBオールイン)":"手順:①相手のポジションと残量からレンジ推定(SB10bb=5割超) ②自分の手の対レンジ勝率(ATo≈60%) ③必要勝率(約42%)と比較→コール。",
+"CO 10bbのポケット6":"①ペアは「降ろせれば丸儲け、コールされてもほぼフリップ以上」 ②66はCO10bbで余裕の範囲内→オールイン。",
+"HJ 10bbのKQオフスート":"①プッシュの利益=降ろして取る1.5bb+コールされた時の捲り目 ②KQoはHJ10bbの範囲内→オールイン。片方の要素だけで判断しない。",
+"バブルでのAJoコール判断":"手順:①賞金構造(バブル=ICM最大) ②スタック関係(カバーされている) ③手札、の順で見る。チップEVでは正しくても賞金EVで大損→QQ+/AK級まで絞ってフォールド。",
+"バブルのビッグスタック":"①中間スタックはICMで「降りるしかない」状態 ②その構造は小さいレイズで十分換金できる→2.2bb。オールインは同じ結果に過大なリスクを払っている。",
+"瀕死のスタックを待つ":"①他に1bbのプレイヤー=数分でほぼ確実に飛ぶ ②待てば入賞確定に近い ③コールはその確定利益を自分から投げる行為→フォールド。",
+"サテライトのQQ(最重要問題)":"①上位N人が同一賞品=チップを増やす価値がほぼゼロ ②既に安全圏=勝っても得なし、負ければ全損 ③QQどころか理論上AAも降り得る→フォールド。",
+"バブルの最短スタック":"①5bb=数周でブラインドに消える=「待つ」選択肢が既にない ②A8oはBB1人へのプッシュとして十分→オールイン。中間・大・短でバブルの正解は正反対。",
+"ファイナルテーブルのペイジャンプ":"①カバーされている ②6bbの短スタックが先に飛べば無条件で賞金アップ ③負ければ最下位賞金で終了——三重苦でICM税がコールEVを超える→フォールド。"
+};
+
+
+// 統一フォーマット表示用の構造化メタ
+const META = {
+"フラッシュドロー vs ポットベット":{st:"トーナメント中盤",pl:"6人",pos:"BB",stk:"25bb",act:"ターン。ポット6,000、相手が6,000(ポットサイズ)をベット"},
+"オープンエンド vs 小さいベット":{st:"トーナメント序盤",pl:"9人",pos:"BB",stk:"60bb",act:"フロップ。ポット4,000、相手が1,000(1/4ポット)をベット"},
+"AAでのプリフロップ判断":{st:"トーナメント序盤",pl:"9人",pos:"BB",stk:"50bb",act:"プリフロップ。相手が先にオールイン(あなたをカバー)"},
+"ガットショット vs 2/3ポット":{st:"トーナメント中盤",pl:"7人",pos:"BB",stk:"30bb",act:"ターン。ポット9,000、相手が6,000(2/3ポット)をベット"},
+"コンボドロー vs オールイン":{st:"トーナメント中盤",pl:"7人",pos:"BB",stk:"18bb",act:"フロップ。ポット5,000、相手が5,000をオールイン"},
+"ペアボードでのドロー(アウツの割引)":{st:"トーナメント中盤",pl:"6人",pos:"BB",stk:"35bb",act:"ターン。ポット8,000、相手が8,000(ポットサイズ)をベット"},
+"UTGのA5オフスート":{st:"トーナメント序盤",pl:"9人",pos:"UTG",stk:"60bb",act:"全員まだアクションしていない"},
+"ボタンのK9スーテッド":{st:"トーナメント序盤",pl:"9人",pos:"BTN(ボタン)",stk:"50bb",act:"全員フォールドで回ってきた"},
+"COのAQオフスート":{st:"トーナメント序盤",pl:"9人",pos:"CO",stk:"60bb",act:"全員フォールドで回ってきた"},
+"BBのディフェンス判断":{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"40bb",act:"BTNが2bbにミニレイズ、SBフォールド。追加1bbでクローズアクション"},
+"SBの72オフスート":{st:"トーナメント序盤",pl:"9人",pos:"SB",stk:"45bb",act:"前に2人がリンプ。追加0.5bbでフロップを見られる"},
+"中盤ポジションのポケット2":{st:"トーナメント序盤",pl:"9人",pos:"HJ(MP)",stk:"40bb",act:"全員フォールドで回ってきた"},
+"SB 8bbのK7オフスート":{st:"トーナメント終盤",pl:"8人",pos:"SB",stk:"8bb",act:"全員フォールド。相手はBBの1人だけ"},
+"UTG 10bbのQ9スーテッド":{st:"トーナメント終盤",pl:"9人",pos:"UTG",stk:"10bb",act:"後ろに8人が控えている"},
+"ボタン 10bbのA2スーテッド":{st:"トーナメント終盤",pl:"8人",pos:"BTN(ボタン)",stk:"10bb",act:"全員フォールド。残る相手はブラインド2人"},
+"BBのコール判断(vs SBオールイン)":{st:"トーナメント終盤",pl:"8人",pos:"BB",stk:"14bb(相手をカバー)",act:"SB(10bb・熟練者)がオールイン"},
+"CO 10bbのポケット6":{st:"トーナメント終盤",pl:"9人",pos:"CO",stk:"10bb",act:"全員フォールドで回ってきた"},
+"HJ 10bbのKQオフスート":{st:"トーナメント終盤",pl:"9人",pos:"HJ",stk:"10bb",act:"全員フォールド。後ろに5人"},
+"バブルでのAJoコール判断":{st:"バブル(残り19人・入賞18人)",pl:"9人",pos:"BB",stk:"22bb",act:"BTNのチップリーダー(60bb・あなたをカバー)がオールイン"},
+"バブルのビッグスタック":{st:"バブル(残り19人・入賞18人)",pl:"9人",pos:"BTN(ボタン)",stk:"70bb(チップリーダー)",act:"全員フォールド。ブラインドの2人は15〜20bbの中間スタック"},
+"瀕死のスタックを待つ":{st:"バブル(残り19人・入賞18人)",pl:"9人",pos:"BB",stk:"15bb",act:"UTG(18bb)がオールイン。別卓に1bbのプレイヤーがいて次のハンドでBB強制"},
+"サテライトのQQ(最重要問題)":{st:"サテライト終盤(残り11人・上位10人が同一賞品)",pl:"9人",pos:"BB",stk:"2番手の大スタック(逃げ切り確実)",act:"チップリーダーがオールイン"},
+"バブルの最短スタック":{st:"バブル(残り19人・入賞18人)",pl:"9人",pos:"SB",stk:"5bb(テーブル最短)",act:"全員フォールド。相手はBB(あなたをカバー)のみ"},
+"ファイナルテーブルのペイジャンプ":{st:"FT残り4人(賞金:4位50万/3位80万/2位120万/1位200万)",pl:"4人",pos:"BB",stk:"25bb(2番手)",act:"SBのチップリーダーがオールイン。別に6bbの短スタックあり"}
+};
+
+// ===== 表形式ナレッジ(解答後に正誤問わず表示) =====
+const RANKS=[..."AKQJT98765432"];
+function expandRange(str){
+  const set=new Set();
+  const ri=r=>RANKS.indexOf(r);
+  for(let tok of str.split(",").map(s=>s.trim()).filter(Boolean)){
+    const plus=tok.endsWith("+"); if(plus)tok=tok.slice(0,-1);
+    if(tok.length===2&&tok[0]===tok[1]){
+      if(plus){for(let j=ri(tok[0]);j>=0;j--)set.add(RANKS[j]+RANKS[j]);}
+      else set.add(tok);
+    }else{
+      const a=tok[0],b=tok[1],suf=tok[2];
+      const sufs=suf?[suf]:["s","o"];
+      for(const s of sufs){
+        if(plus){for(let j=ri(b);j>ri(a);j--)set.add(a+RANKS[j]+s);}
+        else set.add(a+b+s);
+      }
+    }
+  }
+  return set;
+}
+const RANGES={
+ utg10:{label:"UTG 10bb", desc:"9人テーブルの先頭。後ろに8人いるため最も狭い(全体の約9%)。", r:"55+, A9s+, AJo+, KQs"},
+ hj10:{label:"HJ 10bb", desc:"後ろに5人。中盤ポジションの標準形。", r:"44+, A7s+, A9o+, KTs+, KQo, QJs"},
+ co10:{label:"CO 10bb", desc:"後ろに3人。ここから一気に広がり始める。", r:"22+, A2s+, A8o+, K9s+, KJo+, QTs+, JTs"},
+ btn10:{label:"BTN 10bb", desc:"残る相手はブラインドの2人だけ。", r:"22+, A2+, K5s+, K9o+, Q8s+, QTo+, J8s+, JTo, T8s+, 98s, 87s"},
+ sb10:{label:"SB 10bb", desc:"相手はBB1人のみ。プッシュレンジは最も広い。", r:"22+, A2+, K2s+, K4o+, Q2s+, Q6o+, J4s+, J8o+, T6s+, T8o+, 96s+, 98o, 86s+, 76s, 65s"},
+ sb5:{label:"SB 5bb", desc:"5bbで6割超に拡大。3bb以下ではほぼ全ハンドがプッシュになる。", r:"22+, A2+, K2+, Q2s+, Q4o+, J2s+, J7o+, T4s+, T7o+, 95s+, 97o+, 85s+, 87o, 75s+, 76o, 65s"},
+ bbcall:{label:"BBコール vs SB10bb", desc:"SBの広いナッシュプッシュに対するBBのコール目安。プッシュ側よりずっと狭い。", r:"22+, A2s+, A2o+, K8s+, KTo+, Q9s+, QJo, J9s+, T9s", action:"コール"}
+};
+function rangeGridHTML(id){
+  const spot=RANGES[id]; const set=expandRange(spot.r);
+  let combos=0; set.forEach(h=>{combos+=h.length===2?6:(h[2]==="s"?4:12);});
+  const pct=Math.round(100*combos/1326);
+  let cells="";
+  for(let i=0;i<13;i++)for(let j=0;j<13;j++){
+    let key;
+    if(i===j) key=RANKS[i]+RANKS[j];
+    else if(i<j) key=RANKS[i]+RANKS[j]+"s";
+    else key=RANKS[j]+RANKS[i]+"o";
+    cells+=`<span class="rc ${i===j?"pair":""} ${set.has(key)?"on":""}">${key}</span>`;
+  }
+  return `<div class="kt-title">📊 ${spot.label} ${spot.action||"プッシュ"}レンジ目安(緑=${spot.action||"プッシュ"}、全体の約${pct}%)</div><div class="rgrid">${cells}</div>`;
+}
+function ktable(title, head, rows){
+  return `<div class="kt-title">📋 ${title}</div><table class="ktbl"><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</table>`;
+}
+const KT={
+ outs:()=>ktable("アウツ早見表(ルールオブ4と2)",["アウツ","代表例","1枚","2枚"],[
+  ["4","ガットショット","約9%","約17%"],["6","オーバーカード2枚","約13%","約24%"],
+  ["8","OESD","約17%","約32%"],["9","フラッシュドロー","約20%","約35%"],
+  ["12","FD+ガットショット","約26%","約45%"],["15","コンボドロー","約33%","約54%"]]),
+ req:()=>ktable("必要勝率早見表(相手のベットサイズ別)",["相手のベット","コールに必要な勝率"],[
+  ["1/4ポット","約17%"],["1/3ポット","20%"],["1/2ポット","25%"],
+  ["2/3ポット","約29%"],["ポット","約33%"],["2倍ポット","40%"]]),
+ bluff:()=>ktable("ブラフ損益分岐とMDF",["サイズ","ブラフに必要なフォールド率","守る側のMDF"],[
+  ["1/3ポット","25%","75%"],["1/2ポット","33%","67%"],
+  ["2/3ポット","40%","60%"],["ポット","50%","50%"]]),
+ match:()=>ktable("代表マッチアップ勝率(プリフロップオールイン)",["対決","勝率","型"],[
+  ["AA vs KK","約81:19","上ペア vs 下ペア"],["QQ vs AKo","約57:43","ペア vs 2オーバー"],
+  ["AK vs AQ","約73:27","ドミネート"],["22 vs AKo","約52:48","コインフリップ"]]),
+ bubble:()=>ktable("バブルのスタック別方針",["自分のスタック","方針"],[
+  ["ビッグ(相手をカバー)","小さいレイズで圧力をかけ続けて毎ハンド換金"],
+  ["中間(カバーされる)","大幅タイトに。カバー相手とのオールインはQQ+/AK級まで"],
+  ["最短(数周で消滅)","待たない。フォールドエクイティが残るうちに先にプッシュ"]]),
+ open:()=>ktable("オープンレンジの目安(40bb+・9人テーブル)",["ポジション","参加率の目安"],[
+  ["UTG","約14%"],["MP/HJ","約18%"],["CO","約26%"],["BTN","約45%"],["SB","約40%"]])
+};
+function detectSpot(text){
+  if(/【ポジション】BB|【BB】|BBのコール/.test(text)) return "bbcall";
+  if(/SB/.test(text)) return /5bb/.test(text) ? "sb5" : "sb10";
+  if(/ボタン|BTN/.test(text)) return "btn10";
+  if(/UTG/.test(text)) return "utg10";
+  if(/HJ/.test(text)) return "hj10";
+  if(/CO/.test(text)) return "co10";
+  return null;
+}
+function knowledgeHTML(text, kind){
+  const parts=[];
+  if(kind==="nash"||kind==="push"){
+    const s=detectSpot(text);
+    if(s) parts.push(rangeGridHTML(s));
+  }else{
+    if(/バブル|サテライト|ペイジャンプ/.test(text)) parts.push(KT.bubble());
+    if(/アウツ|ドロー/.test(text)) parts.push(KT.outs());
+    if(/必要勝率|必要な勝率|ポットオッズ/.test(text)) parts.push(KT.req());
+    if(/ブラフ|MDF/.test(text)) parts.push(KT.bluff());
+    if(/[AKQJT98765432]{2}[os]? vs /.test(text)) parts.push(KT.match());
+    if(kind==="open") parts.push(KT.open());
+  }
+  return parts.slice(0,2).map(p=>`<div class="k-wrap">${p}</div>`).join("");
+}
+
+// ===== レンジ表からのプッシュ/フォールド問題 自動生成 =====
+// 各スポットの「余裕で範囲内」「余裕で範囲外」のハンドだけを問題化(境界ぎりぎりは除外)
+(function generatePushQuestions(){
+  const SUITSETS=[["s","h"],["h","d"],["d","c"],["c","s"]];
+  const handToCards=(h,seed)=>{
+    const set=SUITSETS[seed%4];
+    if(h.length===2) return [h[0]+set[0], h[1]+set[1]];
+    if(h[2]==="s")  return [h[0]+set[1], h[1]+set[1]];
+    return [h[0]+set[0], h[1]+set[1]];
+  };
+  const weaker=h=>{
+    if(h.length===2){const r=RANKS.indexOf(h[0]); return r<12? RANKS[r+1]+RANKS[r+1] : null;}
+    const rb=RANKS.indexOf(h[1]);
+    if(rb>=12) return null;
+    const nb=RANKS[rb+1];
+    return nb===h[0] ? null : h[0]+nb+h[2];
+  };
+  const stronger=h=>{
+    if(h.length===2){const r=RANKS.indexOf(h[0]); return r>0? RANKS[r-1]+RANKS[r-1] : null;}
+    const rb=RANKS.indexOf(h[1]), ra=RANKS.indexOf(h[0]);
+    return (rb-1<=ra) ? null : h[0]+RANKS[rb-1]+h[2];
+  };
+  const pickEvenly=(arr,n)=>{
+    if(!arr.length || n<=0) return [];
+    if(arr.length<=n) return arr.slice();
+    if(n===1) return [arr[Math.floor(arr.length/2)]];
+    const out=[];
+    for(let k=0;k<n;k++) out.push(arr[Math.floor(k*(arr.length-1)/(n-1))]);
+    return [...new Set(out)];
+  };
+  const allHands=[];
+  for(let i=0;i<13;i++)for(let j=0;j<13;j++)
+    allHands.push(i===j? RANKS[i]+RANKS[j] : (i<j? RANKS[i]+RANKS[j]+"s" : RANKS[j]+RANKS[i]+"o"));
+
+  const SPOTS=[
+    {id:"utg10", pos:"UTG", pl:"9人", stk:"10bb"},
+    {id:"hj10",  pos:"HJ",  pl:"9人", stk:"10bb"},
+    {id:"co10",  pos:"CO",  pl:"9人", stk:"10bb"},
+    {id:"btn10", pos:"BTN(ボタン)", pl:"8人", stk:"10bb"},
+    {id:"sb10",  pos:"SB",  pl:"8人", stk:"10bb"},
+    {id:"sb5",   pos:"SB",  pl:"8人", stk:"5bb"},
+    {id:"bbcall",pos:"BB",  pl:"8人", stk:"12bb(相手をカバー)"}
+  ];
+  let seed=0;
+  for(const sp of SPOTS){
+    const spot=RANGES[sp.id];
+    const set=expandRange(spot.r);
+    let combos=0; set.forEach(h=>{combos+=h.length===2?6:(h[2]==="s"?4:12);});
+    const pct=Math.round(100*combos/1326);
+    const clearIn = allHands.filter(h=>set.has(h) && (w=>w==null||set.has(w))(weaker(h)));
+    const clearOut= allHands.filter(h=>!set.has(h) && (s2=>s2==null||!set.has(s2))(stronger(h)));
+    // 境界ぎりぎり(キワ)のハンド:内側の縁と外側の縁
+    const edgeIn  = allHands.filter(h=>set.has(h) && weaker(h)!=null && !set.has(weaker(h)));
+    const edgeOut = allHands.filter(h=>!set.has(h) && stronger(h)!=null && set.has(stronger(h)));
+    const isCall = sp.id==="bbcall";
+    const act = isCall ? "SB(10bb・熟練者)がオールイン" : "全員フォールドで回ってきた";
+    const doLbl = isCall ? "コール" : "オールイン";
+    const make=(h,inRange)=>{
+      seed++;
+      const opts = inRange
+        ? [{label:doLbl, grade:"best", note:"レンジ内"}, {label:"フォールド", grade:"miss", note:"レンジ内の手を捨てている"}]
+        : [{label:"フォールド", grade:"best", note:"レンジ外"}, {label:doLbl, grade:"miss", note:"レンジ外の手で無理をしている"}];
+      const exp = inRange
+        ? `${spot.label}の${isCall?"コール":"ナッシュプッシュ"}レンジは全体の約${pct}%で、${h} は境界に余裕をもって含まれます。${isCall?"広いプッシュレンジに対して十分に勝ち越せるためコールが正解。":"ここで遠慮することはブラインド侵食を受け入れる純粋な損失です。"}下のレンジ表で ${h} の位置(緑)を確認してください。`
+        : `${h} は${spot.label}のレンジ(約${pct}%)の外側です。${isCall?"広いレンジ相手でも下位の手では勝ち越せません。コールレンジはプッシュレンジよりずっと狭いのが大原則。":"範囲外の手で押すのは、コールされた時に負けすぎるため長期的に損です。"}下のレンジ表で境界を確認してください。`;
+      return {
+        cat:"push", level:2, gen:true, spot:sp.id,
+        title:`${spot.label}の${h}`,
+        metaG:{st:"トーナメント終盤", pl:sp.pl, pos:sp.pos, stk:sp.stk, act},
+        situ:[], hero:handToCards(h,seed), board:[],
+        opts, exp,
+        pr:"レンジはポジション(後ろの人数)とスタックで決まる。表の緑と灰の境界を反復で体に入れる。"
+      };
+    };
+    const makeEdge=(h,leanIn)=>{
+      seed++;
+      const leanLbl = leanIn ? doLbl : "フォールド";
+      const otherLbl = leanIn ? "フォールド" : doLbl;
+      const exp = `${h} は${spot.label}レンジ(約${pct}%)のちょうど境界線上です。EV差はごく僅かで、実際のソルバー解ではこの領域は混合頻度(同じ手を押したり降りたりする)になります。傾きを決める要因は3つ:①アンティの有無(あれば押し寄り)②相手のコール傾向(タイトな相手ほど押し得)③ICM状況(バブルなら降り寄り)。この近似表では「どちらかと言えば${leanLbl}」です。`;
+      return {
+        cat:"push", level:3, gen:true, edge:true, spot:sp.id,
+        title:`${spot.label}の${h}(境界)`,
+        metaG:{st:"トーナメント終盤", pl:sp.pl, pos:sp.pos, stk:sp.stk, act},
+        situ:[], hero:handToCards(h,seed), board:[],
+        opts:[
+          {label:leanLbl, grade:"best", note:"どちらかと言えばこちら"},
+          {label:otherLbl, grade:"ok", note:"EV差は僅か。ミスではない"}
+        ],
+        exp,
+        pr:"境界ハンドは正誤ではなく頻度の世界。「どちらに傾けるか」の要因(アンティ・相手・ICM)ごと覚える。"
+      };
+    };
+    pickEvenly(clearIn,6).forEach(h=>SCENARIOS.push(make(h,true)));
+    pickEvenly(clearOut,5).forEach(h=>SCENARIOS.push(make(h,false)));
+    pickEvenly(edgeIn,2).forEach(h=>SCENARIOS.push(makeEdge(h,true)));
+    pickEvenly(edgeOut,1).forEach(h=>SCENARIOS.push(makeEdge(h,false)));
+  }
+})();
+
+
+const CARDS = [
+// ---------- 数値&オッズ ----------
+{d:"num", q:"ルールオブ4:フロップ時点のフラッシュドロー(9アウツ)、\nリバーまでに完成する確率は?",
+ o:[{t:"約35%",ok:1},{t:"約20%"},{t:"約50%"},{t:"約12%"}],
+ e:"アウツ×4が2枚分の概算(9×4=36%、正確には35%)。オールイン以外では次の1枚だけで考えること(ルールオブ2)。"},
+{d:"num", q:"ターン時点のフラッシュドロー(9アウツ)、\nリバー1枚で完成する確率は?",
+ o:[{t:"約20%",ok:1},{t:"約35%"},{t:"約28%"},{t:"約10%"}],
+ e:"アウツ×2の概算(9×2=18%、正確には9/46≈19.6%)。「1枚なら×2、2枚なら×4」。"},
+{d:"num", q:"オープンエンドストレートドロー(OESD)のアウツ数は?",
+ o:[{t:"8",ok:1},{t:"4"},{t:"9"},{t:"6"}],
+ e:"両端どちらでも完成するので4枚×2種=8アウツ。1枚で約17%、2枚で約32%。"},
+{d:"num", q:"ガットショット(中抜き)のアウツ数は?",
+ o:[{t:"4",ok:1},{t:"8"},{t:"6"},{t:"2"}],
+ e:"1種類のランクのみ=4枚。1枚で約9%。単体では小さいベットにしか付き合えない。"},
+{d:"num", q:"オーバーカード2枚(例:AK vs 相手ペア)のアウツ数は?",
+ o:[{t:"6",ok:1},{t:"9"},{t:"12"},{t:"3"}],
+ e:"A3枚+K3枚=6アウツ。2枚で約24%。「オーバーカードはドローとしては弱い」感覚を持つ。"},
+{d:"num", q:"フラッシュドロー+ガットショットのアウツ数は?",
+ o:[{t:"12",ok:1},{t:"13"},{t:"9"},{t:"15"}],
+ e:"9+4−重複1(ガットショットの1枚は同スートで既にフラッシュアウツ)=12。2枚で約45%。"},
+{d:"num", q:"フラッシュドロー+OESD(コンボドロー)のアウツ数は?",
+ o:[{t:"15",ok:1},{t:"17"},{t:"12"},{t:"9"}],
+ e:"9+8−重複2=15アウツ。2枚で約54%、つまり相手がワンペアなら「有利」。実質モンスター。"},
+{d:"num", q:"15アウツのコンボドロー、フロップから2枚での勝率は?",
+ o:[{t:"約54%",ok:1},{t:"約40%"},{t:"約30%"},{t:"約65%"}],
+ e:"15×4=60%の概算、正確には約54%。フロップの強いコンボドローはオールインを恐れない。"},
+{d:"num", q:"ポケットペアがフロップでセットになる確率は?",
+ o:[{t:"約12%",ok:1},{t:"約25%"},{t:"約6%"},{t:"約18%"}],
+ e:"約1/8(11.8%)。セットマインは「8回に1回しか当たらない」——だから深いスタックでしか成立しない。"},
+{d:"num", q:"AKがフロップでA or Kを少なくとも1枚ヒットする確率は?",
+ o:[{t:"約1/3(32%)",ok:1},{t:"約1/2(50%)"},{t:"約1/4(25%)"},{t:"約2/3(67%)"}],
+ e:"約32%。逆に言えば3回に2回は外れる。AKはヒットしなくても強い(Aハイ+逆転アウツ)がそれを過信しない。"},
+{d:"num", q:"相手の1/4ポットベットにコールするのに必要な勝率は?",
+ o:[{t:"約17%",ok:1},{t:"約25%"},{t:"約12%"},{t:"約33%"}],
+ e:"0.25÷(1+0.25+0.25)=16.7%。小さいベットにはほとんどのドローで付き合える。"},
+{d:"num", q:"相手の1/3ポットベットにコールするのに必要な勝率は?",
+ o:[{t:"20%",ok:1},{t:"25%"},{t:"17%"},{t:"29%"}],
+ e:"(1/3)÷(1+1/3+1/3)=20%。OESD(1枚17%)だと直接オッズはわずかに不足、インプライドオッズ込みでコール圏。"},
+{d:"num", q:"相手のハーフポット(1/2)ベットにコールするのに必要な勝率は?",
+ o:[{t:"25%",ok:1},{t:"33%"},{t:"20%"},{t:"29%"}],
+ e:"0.5÷(1+0.5+0.5)=25%。最頻出サイズ。フラッシュドロー2枚(35%)ならOK、1枚(20%)なら不足。"},
+{d:"num", q:"相手の2/3ポットベットにコールするのに必要な勝率は?",
+ o:[{t:"約29%",ok:1},{t:"25%"},{t:"33%"},{t:"約36%"}],
+ e:"(2/3)÷(1+2/3+2/3)=28.6%。ここから上のサイズは単体ドローではほぼ降り。"},
+{d:"num", q:"相手のポットサイズベットにコールするのに必要な勝率は?",
+ o:[{t:"33%",ok:1},{t:"50%"},{t:"25%"},{t:"40%"}],
+ e:"1÷3=33.3%。「ポットベットには3回に1回勝てる手で」と暗記。"},
+{d:"num", q:"相手の2倍ポット(オーバーベット)にコールするのに必要な勝率は?",
+ o:[{t:"40%",ok:1},{t:"50%"},{t:"33%"},{t:"67%"}],
+ e:"2÷(1+2+2)=40%。どんなに大きいベットでも必要勝率は50%を超えない(=相手レンジに勝ち越す必要まではない)。"},
+{d:"num", q:"自分が1/2ポットのブラフをする時、損益分岐となる相手のフォールド率は?",
+ o:[{t:"33%",ok:1},{t:"50%"},{t:"25%"},{t:"67%"}],
+ e:"0.5÷(0.5+1)=33%。「3回に1回降ろせれば元が取れる」——ハーフポットブラフが多用される理由。"},
+{d:"num", q:"自分が2/3ポットのブラフをする時、損益分岐フォールド率は?",
+ o:[{t:"40%",ok:1},{t:"33%"},{t:"50%"},{t:"60%"}],
+ e:"(2/3)÷(2/3+1)=40%。サイズを上げるほど「降ろさなければならない頻度」が上がる。"},
+{d:"num", q:"自分がポットサイズのブラフをする時、損益分岐フォールド率は?",
+ o:[{t:"50%",ok:1},{t:"40%"},{t:"33%"},{t:"25%"}],
+ e:"1÷2=50%。半分降ろせて初めてトントン。大きいブラフほど確信が必要。"},
+{d:"num", q:"MDF:相手のポットサイズベットに対して、\n搾取されないために守るべきレンジの割合は?",
+ o:[{t:"50%",ok:1},{t:"67%"},{t:"33%"},{t:"75%"}],
+ e:"MDF=ポット÷(ポット+ベット)=50%。ポットベットされたらレンジの半分は継続。ただしライブの甘い相手には理論値より降りてよい。"},
+{d:"num", q:"MDF:相手のハーフポットベットに対して守るべき割合は?",
+ o:[{t:"67%",ok:1},{t:"50%"},{t:"75%"},{t:"33%"}],
+ e:"1÷1.5=67%。小さいベットには広く守る——「安いベットで簡単に降りない」の理論的根拠。"},
+{d:"num", q:"AA vs KK(プリフロップオールイン)の勝率は?",
+ o:[{t:"約80:20",ok:1},{t:"約70:30"},{t:"約60:40"},{t:"約95:5"}],
+ e:"約81:19。上位ペア対下位ペアは常におよそ80:20。「クーラー」はどうしようもない。"},
+{d:"num", q:"QQ vs AKo(プリフロップオールイン)の勝率は?",
+ o:[{t:"約57:43",ok:1},{t:"約70:30"},{t:"約50:50"},{t:"約80:20"}],
+ e:"ペア対2オーバーカード=通称コインフリップだが、実際はペア側が55〜57%でやや有利。"},
+{d:"num", q:"AK vs AQ(プリフロップオールイン)、AQ側の勝率は?",
+ o:[{t:"約27%",ok:1},{t:"約40%"},{t:"約33%"},{t:"約20%"}],
+ e:"ドミネート(キッカー負け)は約73:27。「同じエースなら約1/4しか勝てない」——弱いAxを早いポジションで避ける理由。"},
+{d:"num", q:"AKo vs 22(プリフロップオールイン)の勝率は?",
+ o:[{t:"ほぼ50:50",ok:1},{t:"AK側が約65%"},{t:"22側が約65%"},{t:"AK側が約80%"}],
+ e:"ほぼコインフリップ(22側がごくわずかに有利)。最小ペアでもオーバーカード2枚とは互角に戦える=プッシュ向き。"},
+{d:"num", q:"コールに必要な勝率の公式は?",
+ o:[{t:"コール額÷(ポット+ベット+コール額)",ok:1},{t:"コール額÷ポット"},{t:"ベット額÷ポット"},{t:"コール額÷(ポット−ベット)"}],
+ e:"分母は「コール後の最終ポット全体」。この1本の式が全てのコール判断の土台。"},
+{d:"num", q:"ブラフの損益分岐フォールド率の公式は?",
+ o:[{t:"ベット額÷(ベット額+ポット)",ok:1},{t:"ベット額÷ポット"},{t:"ポット÷ベット額"},{t:"ベット額÷(ポット−ベット額)"}],
+ e:"リスク÷(リスク+リワード)。自分のブラフとコール判断(相手のブラフ頻度の見積り)の両方に使う。"},
+
+// ---------- ナッシュ プッシュ/フォールド ----------
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】SB\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nA2o は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"SBの10bbプッシュレンジは全ハンドの5割超。エースは全てプッシュ(A2oでも余裕で範囲内)。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】SB\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nK7o は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"Kxオフスートの大部分がSB 10bbではプッシュ。BB1人しか残っていない状況の広さを体に入れる。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】SB\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nQ9o は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"Q9oも明確にプッシュ圏内。SBのナッシュレンジは直感よりはるかに広い。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】SB\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\n33 は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"全ポケットペアはSB 10bbで常にプッシュ。コールされてもほぼ50%以上ある。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】SB\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\n72o は?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"オールイン"}],
+ e:"広いSBレンジでも最底辺のゴミハンドは範囲外。「広い」と「全部」は違う。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】SB\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\n83o は?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"オールイン"}],
+ e:"コネクトもスートも無い低カード2枚はコールされた時に勝ち筋がなさすぎる。フォールド。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】SB\n【スタック】5bb\n【状況】全員フォールドで回ってきた。\nK2o は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"5bbまで減るとSBのプッシュレンジは6割超まで拡大(さらに浅くなるとほぼ全ハンドに)。Kxは全て自動プッシュ。浅いほど広く。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】ボタン\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nA2s は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"ボタン10bbは全エースがプッシュ。Aのブロッカー効果でコールされにくい点も価値。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】ボタン\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nKTo は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"残り2人(ブラインドのみ)ならKToは十分すぎる。ボタンのプッシュレンジは約4割。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】ボタン\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\n22 は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"最小ペアでもボタンからは明確なプッシュ。「降ろせれば得、コールされてもフリップ」。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】ボタン\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\n93o は?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"オールイン"}],
+ e:"ボタンでも約4割のレンジには入らない。ゴミハンドの見切りも暗記の内。"},
+{d:"nash", q:"【HJ(CO手前)・10bb】全員フォールドで回ってきた。\nKQo は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"KQoはHJ 10bbのナッシュプッシュ圏内。ブロードウェイ2枚はコールレンジに対しても戦える。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】HJ\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nATo は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"ATo以上のエースは中盤ポジションから安定してプッシュできる。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】HJ\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\n77 は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"中ポケットペアはどのポジションからでも10bbプッシュの主力。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】HJ\n【スタック】10bb\n【状況】全員フォールドで回ってきた。\nQ8o は?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"オールイン"}],
+ e:"後ろに5人いるとQ8oは範囲外。同じ手がSBならプッシュになる——境界はポジションで動く。"},
+{d:"nash", q:"【UTG・9人・10bb】\n88 は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"UTGの狭いレンジでも中ペア以上は確実にプッシュ。88はど真ん中。"},
+{d:"nash", q:"【UTG・9人・10bb】\nAQo は?", two:1,
+ o:[{t:"オールイン",ok:1},{t:"フォールド"}],
+ e:"AQo/AJs級の強いエースはUTGからでもプッシュ。コールされても大差では負けにくい。"},
+{d:"nash", q:"【UTG・9人・10bb】\nKTo は?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"オールイン"}],
+ e:"後ろ8人ではKToは範囲外(ボタンならプッシュ)。「UTGは狭い」を具体的なハンドで覚える。"},
+{d:"nash", q:"【UTG・9人・10bb】\n87s は?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"オールイン"}],
+ e:"スーテッドコネクターはプッシュ向きではない(コールされた時に負けすぎる)。プッシュはハイカード/ペア優先。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】BB\n【スタック】相手をカバー\n【状況】SB(10bb・熟練者)がナッシュ通りの広さでオールイン。\nATo でのコールは?", two:1,
+ o:[{t:"コール",ok:1},{t:"フォールド"}],
+ e:"広いプッシュレンジ(5割超)に対してAToは約60%勝率で余裕のコール。必要勝率は約42%。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】BB\n【スタック】相手をカバー\n【状況】SB(10bb)がオールイン。\n77 でのコールは?", two:1,
+ o:[{t:"コール",ok:1},{t:"フォールド"}],
+ e:"中ペアは広いレンジに対して常に勝ち越す。「オールイン=モンスター」という思い込みを消す。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】BB\n【スタック】相手をカバー\n【状況】SB(10bb)がオールイン。\nKQo でのコールは?", two:1,
+ o:[{t:"コール",ok:1},{t:"フォールド"}],
+ e:"KQoも広いSBレンジに対しては明確なコール。相手のポジションと残量からレンジを推定して決める。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】BB\n【スタック】相手をカバー\n【状況】SB(10bb)がオールイン。\nQ4o でのコールは?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"コール"}],
+ e:"広いレンジ相手でも下位5割の手では勝ち越せない。コール側はプッシュ側よりずっと狭い、が大原則。"},
+{d:"nash", q:"【シチュエーション】トーナメント終盤\n【テーブル人数】9人\n【ポジション】BB\n【スタック】相手をカバー\n【状況】SB(10bb)がオールイン。\n93s でのコールは?", two:1,
+ o:[{t:"フォールド",ok:1},{t:"コール"}],
+ e:"スーテッドでも低カード2枚は論外。コールレンジはペア+強いハイカードで構成する。"},
+{d:"nash", q:"プッシュレンジの広さの順番として正しいのは?(同じ10bb)",
+ o:[{t:"SB > ボタン > HJ > UTG",ok:1},{t:"UTG > HJ > ボタン > SB"},{t:"ボタン > SB > UTG > HJ"},{t:"どこでも同じ"}],
+ e:"後ろに残る人数が少ないほど広くプッシュできる。SB(残り1人)が最も広く、UTG(残り8人)が最も狭い。"},
+{d:"nash", q:"スタックが浅くなるほど、プッシュレンジは?", two:1,
+ o:[{t:"広くなる",ok:1},{t:"狭くなる"}],
+ e:"浅いほどブラインドの相対価値が上がり、待つコストが増えるため広がる(SBは10bbで約5割→5bbで6割超)。"},
+
+// ---------- 原則&ICM ----------
+{d:"icm", q:"ICMの核心を一言で言うと?",
+ o:[{t:"チップの価値は線形ではない(失う1枚>得る1枚)",ok:1},{t:"チップが多いほど1枚の価値が上がる"},{t:"賞金はチップ数に比例する"},{t:"ICMはヘッズアップで最も強く働く"}],
+ e:"賞金構造のせいで「チップ2倍≠賞金期待値2倍」。だからチップEVで正しいコールが賞金EVでは間違いになる。"},
+{d:"icm", q:"バブルでの中間スタックの基本方針は?",
+ o:[{t:"大幅にタイトにする(特にカバーされる相手に)",ok:1},{t:"チャンスなので広くコールする"},{t:"通常と同じでよい"},{t:"全ハンドオールイン"}],
+ e:"失うものが最大の立場。特に自分をカバーする相手とのオールインはQQ+/AK級まで絞る。"},
+{d:"icm", q:"バブルでのビッグスタックの基本方針は?",
+ o:[{t:"降りられない相手に小さいレイズで圧力をかけ続ける",ok:1},{t:"安全にフォールドを増やす"},{t:"毎回オールインする"},{t:"リンプで安く見る"}],
+ e:"中間スタックの「降りるしかない」構造を毎ハンド換金する。サイズは最小限(2.2bb前後)で十分。"},
+{d:"icm", q:"バブルでの最短スタックの基本方針は?",
+ o:[{t:"ブラインドに消される前に自分から先に動く",ok:1},{t:"入賞まで全部フォールド"},{t:"強い手だけ待つ"},{t:"リンプで様子を見る"}],
+ e:"待つ選択肢が既にない側。フォールドエクイティが残っているうちにプッシュする。中間・大・短で正解が正反対。"},
+{d:"icm", q:"サテライト(上位N人が同一賞品)の終盤、最優先で見るべきものは?",
+ o:[{t:"賞金構造と自分の安全度(手札はその次)",ok:1},{t:"自分の手札の強さ"},{t:"相手のテル"},{t:"ポットオッズ"}],
+ e:"1位と最下位通過の賞品が同じ=チップを増やす価値がほぼゼロ。安全圏ならAAですらフォールドが正解になり得る。"},
+{d:"icm", q:"FT(ファイナルテーブル)でカバーされている時のマージナルなコールは?",
+ o:[{t:"厳禁(ICM税がコールのEVを削る)",ok:1},{t:"チップEV通りでよい"},{t:"むしろ広げる"},{t:"相手による"}],
+ e:"ペイジャンプが大きいほど「先に誰かが飛ぶのを待つ価値」が具体的な金額として存在し、コールEVから差し引かれる。"},
+{d:"icm", q:"MTTに必要なバンクロールの目安は?",
+ o:[{t:"バイイン100〜500個分",ok:1},{t:"バイイン10個分"},{t:"バイイン30個分"},{t:"3個あれば十分"}],
+ e:"MTTは分散が極大(勝率が高くても数百戦の不入賞が普通)。ライブ年数戦なら「娯楽予算」として割り切る設計も合理的。"},
+{d:"icm", q:"プリフロップ参加の大原則は?",
+ o:[{t:"参加するならレイズ、でなければフォールド",ok:1},{t:"安く見たいのでリンプ"},{t:"スーテッドなら全部コール"},{t:"ポジション無関係に手札で決める"}],
+ e:"リンプは主導権・情報・ポット構築の全てを放棄する。例外はごく僅か(SB完走など)で、初中級のうちは「リンプ禁止」でよい。"},
+{d:"icm", q:"スタック10bb以下での意思決定の基本形は?",
+ o:[{t:"オールインかフォールドの二択",ok:1},{t:"小さくレイズして様子見"},{t:"リンプ中心"},{t:"コール中心"}],
+ e:"浅いスタックで2段階に分ける意味がない(レイズ→フォールドが最悪)。プリフロップで全圧力をかける。"},
+{d:"icm", q:"プッシュ(オールイン)の利益の正体は?",
+ o:[{t:"降ろして取るブラインド+コールされた時の勝率の合算",ok:1},{t:"コールされた時の勝率のみ"},{t:"降ろせる確率のみ"},{t:"運"}],
+ e:"フォールドエクイティ+ショーダウンエクイティ。どちらか片方だけで判断しない。だから中途半端な手でも押せる。"},
+{d:"icm", q:"ライブの甘いフィールドの典型傾向:リバーの大きなベットは?",
+ o:[{t:"バリューに極端に偏る(薄いブラフキャッチは控える)",ok:1},{t:"ブラフだらけ"},{t:"理論通りのバランス"},{t:"読めない"}],
+ e:"ライブの中低額帯ではリバーの大ベットのブラフ頻度が理論値より大幅に低い。MDFを無視して降りてよい代表例。"},
+{d:"icm", q:"ライブの甘いフィールドの典型傾向:3ベット(リレイズ)は?",
+ o:[{t:"理論よりずっと強い(QQ+/AK中心と読んでよい)",ok:1},{t:"ブラフが多い"},{t:"理論通り"},{t:"弱い手が多い"}],
+ e:"ライブではブラフ3ベットが理論より圧倒的に少ない。AQやJJでの3ベットオールイン突撃は集団傾向に対して損。"},
+{d:"icm", q:"ライブの甘いフィールドの典型傾向:リンパーが多いテーブルでは?",
+ o:[{t:"バリューハンドのレイズサイズを大きくして搾り取る",ok:1},{t:"自分もリンプに合わせる"},{t:"ブラフを増やす"},{t:"参加を減らす"}],
+ e:"コールしすぎる相手には「ブラフを減らしバリューを太く」が搾取の基本形。サイズを上げても降りてくれないなら、それは搾取のチャンス。"},
+{d:"icm", q:"ポーカーで最も価値の高いポジションは?",
+ o:[{t:"ボタン(常に最後に行動できる)",ok:1},{t:"UTG(最初に主導権を握れる)"},{t:"BB(既にチップを入れている)"},{t:"SB(ボタンの次に有利)"}],
+ e:"ポストフロップで常に相手の行動を見てから決められる。オープンレンジも防御レンジも全てここを頂点に設計されている。"},
+{d:"icm", q:"「チップEVで正しいがICMで間違い」が最も起きやすい局面は?",
+ o:[{t:"バブルとFTのペイジャンプ(カバーされたオールイン)",ok:1},{t:"トーナメント初日の序盤"},{t:"ヘッズアップ"},{t:"キャッシュゲーム"}],
+ e:"賞金の非線形性が最大化する場所。逆に序盤とヘッズアップ(残り2人)はほぼチップEV通りでよい。"}
+];
+
+
+// ===== カード画像描画 =====
+const SUITS = {s:"♠", h:"♥", d:"♦", c:"♣"};
+function cardHTML(cd){
+  const r = cd.slice(0,-1).replace("T","10");
+  const s = cd.slice(-1);
+  return `<span class="card suit-${s}"><span>${r}</span><span class="suit">${SUITS[s]}</span></span>`;
+}
+// ハンド表記(A2o/AKs/33等)→2枚のカードへ。setは使うスート組
+function handCards(n, set){
+  const r1 = n[0], r2 = n[1];
+  const suf = n.length>2 ? n[2] : (r1===r2 ? "" : "o");
+  if(r1===r2) return [r1+set[0], r2+set[1]];
+  if(suf==="s") return [r1+set[1], r2+set[1]];
+  return [r1+set[0], r2+set[1]];
+}
+// 問題文からハンド表記を自動抽出して描画
+function handVisualHTML(q){
+  const HAND = "[AKQJT98765432]{2}[os]?";
+  const duel = q.match(new RegExp("("+HAND+")\\s*vs\\s*("+HAND+")"));
+  if(duel){
+    const h1 = handCards(duel[1], ["s","h"]);
+    const h2 = handCards(duel[2], ["d","c"]);
+    return `<div class="cards-row">${h1.map(cardHTML).join("")}<span class="vs-lbl">vs</span>${h2.map(cardHTML).join("")}</div>`;
+  }
+  const single = q.match(new RegExp("(?:^|\\n)("+HAND+")\\s+(?:は|での)"));
+  if(single){
+    const h = handCards(single[1], ["s","h"]);
+    return `<div class="cards-row">${h.map(cardHTML).join("")}</div>`;
+  }
+  return "";
+}
+
+
+// ===== ポストフロップ&GTO問題(追加コンテンツ) =====
+const POSTFLOP_SCENARIOS=[
+{cat:"postflop", level:1, title:"ドライボードへのCベット",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"40bb",act:"あなたがプリフロップでレイズ、BBがコール。フロップでBBがチェック"},
+ situ:[], hero:["As","Kd"], board:["Kh","7c","2s"],
+ opts:[{label:"小さくベット(1/3ポット)",grade:"best",note:"高頻度の標準Cベット"},{label:"ポットサイズベット",grade:"ok",note:"悪くないが取りこぼす"},{label:"チェック",grade:"miss",note:"主導権の放棄"}],
+ exp:"K72レインボーはドローが無い「ドライボード」で、しかもプリフロップレイザー側にK・A級の強い手が多い(レンジ有利)。この条件では小さいベットをほぼ全レンジで打つのが現代の標準です。小さくても相手の外れた手(スーテッドコネクター等)は降り、コールされてもAKは余裕で先行しています。大きいベットは弱い手を早々に降ろしてしまい、チェックはせっかくの有利な状況で無料カードを与えます。",
+ pr:"ドライボード+レンジ有利=小さく高頻度のCベット。サイズは1/4〜1/3で十分。"},
+{cat:"postflop", level:2, title:"ウェットボードでのCベット自重",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"40bb",act:"あなたがレイズ、BBがコール。フロップでBBがチェック"},
+ situ:[], hero:["Ac","Qc"], board:["Jh","Th","9s"],
+ opts:[{label:"チェック",grade:"best",note:"不利なボードでは頻度を落とす"},{label:"小さくベット",grade:"ok",note:"ガットショットの裏付けはある"},{label:"ポットサイズベット",grade:"miss",note:"チェックレイズされて困る"}],
+ exp:"JT9ツートーンは、コネクターやワンペア級を多く含むコーラー(BB)側のレンジに強く当たるボードで、レンジ有利はむしろ相手にあります。AQはガットショット+オーバーカードがありますが、大きくベットしてチェックレイズを受けると何もできません。「Cベットは自動」という癖を矯正するのがこの問題の狙いです。",
+ pr:"Cベット頻度はボードとレンジの相性で決める。コーラー有利のボードではチェックが増える。"},
+{cat:"postflop", level:1, title:"リバーのバリューベット",
+ metaG:{st:"トーナメント中盤",pl:"7人",pos:"BTN(ボタン)",stk:"35bb",act:"あなたのツーペアでリバーへ。相手はフロップ・ターンをチェックコールし、リバーもチェック"},
+ situ:[], hero:["Ad","Jd"], board:["Ah","Jc","8s","4d","2c"],
+ opts:[{label:"2/3ポットでバリューベット",grade:"best",note:"取り切る"},{label:"ミニベット",grade:"miss",note:"大幅な取りこぼし"},{label:"チェック",grade:"miss",note:"無料で見せる最大の損"}],
+ exp:"トップツーペアは、相手のコールレンジ(Aヒット、Jヒット等)から十分に支払いをもらえる明確なバリューハンドです。チェックで終えるのは「勝っているのに集金しない」こと。ライブの甘い相手はワンペアで大きめのベットもコールしがちなので、サイズは理論より大きめでも機能します。利益の本体はブラフの成功ではなく、バリューベットの積み重ねです。",
+ pr:"バリューの取りこぼしはブラフの失敗より高くつく。勝っている時に取り切る。"},
+{cat:"postflop", level:2, title:"ライブのリバー大ベットに対して",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"30bb",act:"受け身な相手がフロップ・ターンをチェックコールの後、リバーで突然ポットサイズのベット"},
+ situ:[], hero:["Kh","Qs"], board:["Ks","9h","5c","3d","Ad"],
+ opts:[{label:"フォールド",grade:"best",note:"ライブ集団の偏りへの調整"},{label:"コール",grade:"miss",note:"MDF理論の機械的適用"},{label:"レイズ",grade:"blunder",note:"バリューにしか呼ばれない"}],
+ exp:"理論(MDF)ではポットベットに対してレンジの半分を守る必要があります。しかしライブ中低額帯の「受け身な相手の突然のリバー大ベット」はバリュー(ここではAxや2ペア以上)に極端に偏っており、ブラフはほとんど含まれません。MDFは『搾取されないための下限』であって『常に守る義務』ではない——集団傾向が分かっているなら、トップペア級のブラフキャッチは降りるのが利益的です。",
+ pr:"理論は基準線。相手の偏りが観測できるなら、理論から離れる方が儲かる。"},
+{cat:"postflop", level:2, title:"コンボドローのチェックレイズ",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"25bb",act:"あなたがBBでコールし、フロップでチェック。BTNが1/3ポットをベット"},
+ situ:[], hero:["6h","5h"], board:["8h","7c","2h"],
+ opts:[{label:"チェックレイズ(オールイン)",grade:"best",note:"2つの勝ち筋で攻める"},{label:"コール",grade:"ok",note:"悪くないがFEを放棄"},{label:"フォールド",grade:"blunder",note:"勝率54%の手を捨てている"}],
+ exp:"フラッシュドロー+OESDで15アウツ、残り2枚で勝率約54%——相手がワンペアでも実はあなたが有利です。この手は「降ろして勝つ」と「引いて勝つ」の2つの財源を持つ最強のセミブラフで、25bbの浅さならオールインまで行って構いません(どうせほぼ全部入る)。受けるコールも許容ですが、フォールドエクイティという財源を1つ捨てています。",
+ pr:"強いコンボドローは受けるより攻める。セミブラフは実質バリューの一種。"},
+{cat:"postflop", level:2, title:"低SPRでのコミット判断",
+ metaG:{st:"トーナメント終盤",pl:"7人",pos:"CO",stk:"14bb",act:"あなたがレイズ(2.2bb)、BBコール。フロップでBBが残り11bbをオールイン"},
+ situ:[], hero:["Ah","Js"], board:["Jd","8c","3h"],
+ opts:[{label:"コール",grade:"best",note:"低SPRのトップペアはコミット"},{label:"フォールド",grade:"miss",note:"深いスタックの感覚を引きずっている"}],
+ exp:"必要勝率は約40%(ポット約5.5bb+相手の11bbに対して11bbのコール)。トップペア・トップキッカーは、相手のオールインレンジ(ドロー、下のペア、ブラフ含む)に対して十分勝ち越します。スタックが浅い(SPRが低い)ほど「全部入れてよい手」の基準は下がり、浅いMTTのトップペアはほぼコミット。『ワンペアだから慎重に』は深いスタック用の感覚です。",
+ pr:"SPRが低いほど全部入れる基準は下がる。浅いスタックのトップペアで降りない。"},
+{cat:"postflop", level:3, title:"ターンのセカンドバレル",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BTN(ボタン)",stk:"45bb",act:"あなたがレイズ、BBコール。フロップQ72であなたがCベットしコールされ、ターンにAが落ちてBBがチェック"},
+ situ:[], hero:["Kd","Js"], board:["Qh","7d","2c","As"],
+ opts:[{label:"ベット(2/3ポット)",grade:"best",note:"レンジ有利なカードを突く"},{label:"チェック",grade:"ok",note:"消極的だが破綻はしない"},{label:"オールイン",grade:"blunder",note:"リスクとリターンが不釣り合い"}],
+ exp:"ターンのAは「レイザー側のレンジに多く、コーラー側に少ない」カードです。あなたの手札が何であれ、BBのQxや中ペアはAを見て継続しづらくなっており、このレンジの非対称性を突くセカンドバレルは利益的です。KJにはガットショット(T)のバックアップもあります。ただしオールインは、降ろせる相手には過剰で、コールする相手には負けている典型的なサイズミスです。",
+ pr:"バレルは自分の手ではなく「そのカードがどちらのレンジを強化したか」で決める。"},
+{cat:"postflop", level:2, title:"マルチウェイのCベット自重",
+ metaG:{st:"トーナメント序盤",pl:"9人",pos:"CO",stk:"60bb",act:"あなたがレイズ、BTNとBBがコール(3人ポット)。フロップでBBがチェック"},
+ situ:[], hero:["Ac","Ts"], board:["Th","9h","4c"],
+ opts:[{label:"チェック",grade:"best",note:"人数が増えたら基準を上げる"},{label:"小さくベット",grade:"ok",note:"プロテクション目的なら"},{label:"ポットサイズベット",grade:"miss",note:"呼ぶのは同等以上の手だけ"}],
+ exp:"マルチウェイでは「誰か1人でも強い手を持っている確率」が急増するため、Cベットの基準は大幅に上がります。ATのトップペアは、2人を相手にしたウェットボードでは『ベットして降りるのはもっと弱い手、コールするのは同等以上とドロー』という損な構図。チェックで安くターンを見るのが標準です。ヘッズアップの感覚をそのまま持ち込むのが典型的なミスです。",
+ pr:"マルチウェイではベット頻度も薄いバリューも大幅減。中途半端な手はチェック。"},
+{cat:"postflop", level:3, title:"ウェットボードのセット",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BTN(ボタン)",stk:"40bb",act:"あなたがレイズ、BBコール。フロップでBBがチェック。あなたはセットを引いた"},
+ situ:[], hero:["7h","7s"], board:["9d","8d","7c"],
+ opts:[{label:"大きくベット(ポット近く)",grade:"best",note:"ドローに間違った価格を払わせる"},{label:"ミニベット",grade:"miss",note:"ドローに安売り"},{label:"チェック(スロープレイ)",grade:"blunder",note:"無料で逆転のチャンスを献上"}],
+ exp:"987ツートーンのセットは「今はほぼ最強だが、多くのターンカードで景色が変わる」手です。フラッシュドロー・ストレートドローに正しくない価格を払わせ、逆転された時のためにも今のうちにポットを育てるのが正解。スロープレイは『無料カードを与える+ポットが育たない』の二重損で、ドライボード専用の技術です。",
+ pr:"スロープレイはドライボード限定。ウェットボードの強い手は大きく速く。"},
+{cat:"postflop", level:3, title:"チェックレイズへの対応",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"42bb",act:"あなたがレイズしてCベット(1/3)、BBがチェックレイズ(3.5倍)してきた"},
+ situ:[], hero:["Ah","Kc"], board:["Ks","8s","3d"],
+ opts:[{label:"コール",grade:"best",note:"ブラフキャッチャーはコールする手"},{label:"3ベット(レイズ返し)",grade:"miss",note:"ブラフを降ろしバリューだけ残す"},{label:"フォールド",grade:"miss",note:"降りるには強すぎる"}],
+ exp:"ドライボードのチェックレイズはバリュー(セット、K8等)とブラフ(ガットショット、フラッシュドロー)の混合レンジです。TPTKは『ブラフには大きく勝ち、バリューには負けている』ブラフキャッチャーの最上位で、降りるには強すぎます。一方レイズ返しは、相手のブラフを降ろして(そこからはもう取れない)、続けてくるバリューだけを残す——つまり自ら損な相手だけを選別する行為になりがちです。",
+ pr:"ブラフキャッチャーはコールで両方に対応する。レイズ返しはブラフを逃がすことに注意。"},
+// ---- GTO応用判断 ----
+{cat:"gto", level:2, title:"ショーダウンバリューの活用",
+ metaG:{st:"トーナメント中盤",pl:"7人",pos:"BTN(ボタン)",stk:"35bb",act:"リバーで相手がチェック。あなたはミドルペア(そこそこ勝っていそうだが自信はない)"},
+ situ:[], hero:["9c","9d"], board:["Kh","7s","4d","2c","Jh"],
+ opts:[{label:"チェック(ショーダウン)",grade:"best",note:"SDVのある手はブラフ化しない"},{label:"大きくベット(ブラフ化)",grade:"miss",note:"降ろせるのは自分より弱い手だけ"},{label:"小さくバリューベット",grade:"ok",note:"薄いが一理ある"}],
+ exp:"99は「チェックすればそこそこ勝てる(ショーダウンバリューがある)」手です。ここで大きくベットしても、降りるのはあなたが既に勝っている手、コールするのは勝っている手——ブラフとして最悪の設計です。ブラフはショーダウンで勝てない手(引き損ねたドロー等)に任せ、SDVのある手はチェックで無料の決着を選ぶ。これがレンジ設計の基礎です。",
+ pr:"ブラフは勝てない手の仕事。ショーダウン価値のある手はチェックで換金する。"},
+{cat:"gto", level:3, title:"ブロッカーブラフ",
+ metaG:{st:"トーナメント中盤",pl:"7人",pos:"BTN(ボタン)",stk:"38bb",act:"リバーでボードにハートが3枚。あなたのドローは外れたが、A♥を持っている。相手がチェック"},
+ situ:[], hero:["Ah","5c"], board:["Kh","9h","6s","2h","Qd"],
+ opts:[{label:"ブラフ(2/3ポット)",grade:"best",note:"ナッツブロッカーを持つ手が最適なブラフ候補"},{label:"チェックで諦める",grade:"ok",note:"相手がコール魔なら正解"},{label:"オールイン",grade:"miss",note:"過剰サイズ"}],
+ exp:"A♥を持っている=相手はナッツフラッシュを持てず、強いフラッシュの組み合わせも大きく減っています(ブロッカー効果)。つまり相手のコールできる手が構造的に少ない状況で、ブラフを選ぶならこの手からです。Aハイのショーダウン勝率がほぼ無い点も「失うものがない」条件を満たします。ただしライブで相手が明らかに降りない相手なら、ブラフ自体を撤退するのが正しい調整です。",
+ pr:"ブラフはランダムに打たない。相手の最強の手をブロックしている手から選ぶ。"},
+{cat:"gto", level:2, title:"均衡と搾取の切り替え",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"32bb",act:"「絶対にブラフしない」と分かっている超タイトな相手が、リバーで2/3ポットをベット。あなたはブラフキャッチャー"},
+ situ:[], hero:["Jd","Jc"], board:["Kc","8h","5s","2d","7h"],
+ opts:[{label:"フォールド",grade:"best",note:"情報がある時は理論から離れる"},{label:"MDF通りコール",grade:"miss",note:"未知の相手用の基準を既知の相手に適用"}],
+ exp:"MDF(この場合レンジの60%を守る)は『相手が均衡通りにブラフを混ぜてくる』前提の防御量です。ブラフが0と分かっている相手のベットに対しては、ブラフキャッチャーのコールは全額寄付になります。GTOは未知の相手への保険、エクスプロイトは既知の偏りの換金——どちらを使うかは情報量で決まります。これがGTO学習の最終的な使い方です。",
+ pr:"GTOは相手を知らない時の武装。相手を知っているなら、知識に従って離れる。"},
+{cat:"gto", level:2, title:"小さいベットへの防御義務",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"40bb",act:"BTNのレイズにあなたがBBでコール。フロップであなたがチェック、BTNが1/2ポットをベット"},
+ situ:[], hero:["5d","5c"], board:["Kd","8s","Qh"],
+ opts:[{label:"コール",grade:"best",note:"MDFの防御レンジの一員"},{label:"フォールド",grade:"ok",note:"相手がブラフ皆無のタイプなら"},{label:"レイズ",grade:"miss",note:"バリューにもブラフにも中途半端"}],
+ exp:"1/2ポットのベットに対するMDFは67%——レンジの2/3は継続しないと、相手は『どんな2枚でもベットすれば儲かる』状態になります。ポケット55のような下のペアも、この防御レンジの立派な一員です(相手のブラフに勝っている+セットへの逆転もある)。ただしこれは頻度の話で、相手がブラフを打たないタイプだと分かっているなら降りてよい——理論値と調整の二段構えです。",
+ pr:"小さいベットには広く守る(1/2ポット→67%)。守らないと全ハンドブラフに負ける。"}
+];
+SCENARIOS.push(...POSTFLOP_SCENARIOS);
+
+Object.assign(LEARN, {
+"ドライボードへのCベット":"①ボード分類(ドライ=ドロー無し) ②レンジ有利の確認(レイザー側にK/A級が多い) ③サイズは1/4〜1/3で「安く・広く」。誤解:強い時だけベットする(パターンがバレる)。",
+"ウェットボードでのCベット自重":"①ボードがどちらのレンジに当たるか(JT9はコーラー側) ②不利ボードはチェック多め ③打つなら強いドロー優先。誤解:レイズしたから必ず継続ベット。",
+"リバーのバリューベット":"①相手のコールできる手を列挙(Ax/Jx) ②それらに勝ち越しているか確認 ③勝ち越しなら大きめに。誤解:「ベットして降ろしたらもったいない」——降りる手からは元々取れない。",
+"ライブのリバー大ベットに対して":"①相手のライン(受け身→突然の大ベット)の意味を読む ②ライブ集団はリバー大ベットのブラフが理論より大幅に少ない ③MDFとの差を意識した上で降りる。",
+"コンボドローのチェックレイズ":"①アウツを数える(9+8−2=15) ②2枚で約54%=実は有利 ③浅いスタックなら即オールインでFEも取る。誤解:ドローは常に安く見るもの。",
+"低SPRでのコミット判断":"①必要勝率を計算(約40%) ②相手のオールインレンジを想定(ドロー・下ペア込み) ③SPR<2ならトップペアはコミット。誤解:ワンペアで大ポットを避ける(深いスタック用)。",
+"ターンのセカンドバレル":"①落ちたカードがどちらのレンジを強化したか ②相手の中程度の手が降り得るか ③自分のバックアップ(ガットショット等)。誤解:手が完成していないからチェック。",
+"マルチウェイのCベット自重":"①人数を確認(3人以上で基準激変) ②「ベットに反応するレンジ」を想像 ③中途半端な手はチェック。誤解:ヘッズアップの頻度をそのまま適用。",
+"ウェットボードのセット":"①ボードのドロー本数を数える ②無料カードの危険性を見積もる ③ドローが「間違った価格」でしか引けないサイズに設定。誤解:強い手は罠を張る。",
+"チェックレイズへの対応":"①相手のチェックレイズレンジを二分(バリュー/ブラフ) ②TPTKはブラフに勝ちバリューに負ける=ブラフキャッチャー ③コールで両方に対応。誤解:強いからレイズ返し。",
+"ショーダウンバリューの活用":"①この手はチェックで勝てるか?(SDVの有無) ②ベットで降ろせる手/呼ばれる手を列挙 ③SDVありならチェック。誤解:「中途半端だから降ろしにいく」。",
+"ブロッカーブラフ":"①自分の手札が相手のどの強い手を減らしているか ②自分のショーダウン勝率(無いほどブラフ向き) ③相手がフォールドできるタイプか。",
+"均衡と搾取の切り替え":"①相手の情報量を評価 ②情報ゼロ→GTO基準線 ③明確な偏り→そちらに全振り。誤解:GTOを常に守るのが上級者(実際は使い分けが上級)。",
+"小さいベットへの防御義務":"①MDF=ポット÷(ポット+ベット)を計算 ②防御レンジに入る手(ペア、良いバックドア)を確認 ③相手タイプで最終調整。"
+});
+
+// GTO知識カード(暗記デッキ追加)
+CARDS.push(
+{d:"gto", q:"リバーでポットサイズのベットを打つ時、\n均衡でのブラフの適正割合は?",
+ o:[{t:"約1/3(33%)",ok:1},{t:"約50%"},{t:"約10%"},{t:"0%(バリューのみ)"}],
+ e:"コール側の必要勝率33%とちょうど無差別になる比率(バリュー2:ブラフ1)。ブラフが多すぎると常にコールされ、少なすぎると常に降りられて搾取される。"},
+{d:"gto", q:"ベットサイズを大きくするほど、\n混ぜられるブラフの数は?",
+ o:[{t:"増やせる",ok:1},{t:"減らすべき"},{t:"変わらない"}], two:0,
+ e:"2倍ポットなら約40%までブラフを混ぜても釣り合う。相手に悪いオッズを突きつけるほど、ブラフの比率を上げても均衡が保たれる。"},
+{d:"gto", q:"「ポラライズされたレンジ」とは?",
+ o:[{t:"ナッツ級とブラフの二極で構成され、中間の手を含まない",ok:1},{t:"強い手だけで構成されたレンジ"},{t:"あらゆる強さを均等に含むレンジ"},{t:"スーテッドだけのレンジ"}],
+ e:"大きいベットはポラライズしたレンジで打ち、小さいベットは中間の手も含む「マージした」レンジで打つ——サイズとレンジ構成は連動する。"},
+{d:"gto", q:"「レンジ有利」と「ナッツ有利」の違いは?",
+ o:[{t:"レンジ全体の平均勝率の高さ vs 最強クラスの手の独占",ok:1},{t:"同じ意味"},{t:"ポジションの有無の違い"},{t:"スタック量の違い"}],
+ e:"K72はレイザーがレンジ有利(小さく高頻度ベット向き)。986はコーラーがナッツ有利(レイザーは慎重に)。どちらの有利かでベット戦略の形が変わる。"},
+{d:"gto", q:"ブラフに最も適した手の条件は?",
+ o:[{t:"ショーダウンで勝てず、相手の強い手をブロックしている",ok:1},{t:"レンジ内で一番弱い手"},{t:"ショーダウン価値のある中程度の手"},{t:"どの手でも同じ"}],
+ e:"例:3ハートのボードでA♥を持つ=相手のナッツフラッシュを消している。「勝ち目がない+相手のコール手を減らす」の2条件を満たす手からブラフを選ぶ。"},
+{d:"gto", q:"混合戦略(同じ手を確率的に使い分ける)が\n必要になる理由は?",
+ o:[{t:"常に同じ行動だとパターンを読まれて搾取されるため",ok:1},{t:"運の要素を増やすため"},{t:"計算を簡単にするため"},{t:"必要になることはない"}],
+ e:"境界上のハンドは「70%押し30%降り」のような頻度になる。人間の実践では厳密な乱数は不要で、境界ハンドを日によって散らす意識で十分。"},
+{d:"gto", q:"GTO(均衡戦略)から意図的に離れてよいのはいつ?",
+ o:[{t:"相手の明確な偏りが観測できた時",ok:1},{t:"負けが込んでいる時"},{t:"強いハンドが来た時"},{t:"離れてはいけない"}],
+ e:"GTOは未知の相手に搾取されないための保険。相手が「コールしすぎ」「ブラフしなさすぎ」と分かったら、その偏りを突く方がEVは高い。ただし自分も搾取可能になる点は認識する。"},
+{d:"gto", q:"ソルバーの「ノードロック」とは?",
+ o:[{t:"相手の戦略を固定して、それへの最適対応を計算させる機能",ok:1},{t:"特定のハンドを使用禁止にする機能"},{t:"計算を途中で止める機能"},{t:"レーキを設定する機能"}],
+ e:"例:「この相手はリバーでブラフ頻度5%」と固定して解かせると、対ライブ集団の最適戦略が事前に作れる。エクスプロイト準備の中核ツール。"}
+);
+
+// ===== ポストフロップ拡張(第2弾:フレームワーク網羅20問+思考カード8枚) =====
+const POSTFLOP2=[
+{cat:"postflop", level:3, title:"ポジションを活かすフロート",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BTN(ボタン)",stk:"45bb",act:"COがレイズ、あなたがBTNでコール。フロップでCOが1/3ポットのCベット"},
+ situ:[], hero:["Kd","Qd"], board:["8s","5c","2s"],
+ opts:[{label:"コール(フロート)",grade:"best",note:"位置+勝ち筋2つで安く続行"},{label:"レイズ",grade:"ok",note:"ブラフとして成立はする"},{label:"フォールド",grade:"miss",note:"安いベットに対して過剰に素直"}],
+ exp:"KQは2枚のオーバーカード(6アウツ)+バックドアの伸びしろがあり、しかも最後に行動できるポジションがあります。小さいCベットにコールしておき、相手がターンで諦めたら奪いにいく——これが「フロート」です。ドライボードの小さいCベットは相手のほぼ全レンジで打たれているため、素直に降りると搾取され続けます。",
+ pr:"ポジションがある時、安いベットには「後で奪う権利」込みでコールできる。"},
+{cat:"postflop", level:2, title:"フラッシュドローの受け方(OOP)",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"35bb",act:"BTNのレイズにBBでコール。フロップであなたがチェック、BTNが1/2ポットをベット"},
+ situ:[], hero:["7h","6h"], board:["Qh","Th","4c"],
+ opts:[{label:"コール",grade:"best",note:"価格と勝率が見合う"},{label:"チェックレイズ",grade:"ok",note:"セミブラフとして選択肢"},{label:"フォールド",grade:"blunder",note:"十分な勝率を捨てている"}],
+ exp:"フラッシュドロー9アウツは2枚で約35%。1/2ポットの必要勝率25%に対し、引けた時の追加回収も含めて十分にコールできます。弱い低フラッシュドローなので、チェックレイズで大きなポットを作るよりは安く見る方が無難ですが、頻度の一部としてのレイズは許容です。降りるのだけが明確な間違いです。",
+ pr:"ドローは価格で判断する。1/2ポットまでのベットにフラッシュドローはほぼ続行。"},
+{cat:"postflop", level:1, title:"完全に外れた時の撤退",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"40bb",act:"BTNのミニレイズにBBでコール。フロップであなたがチェック、BTNが1/2ポットをベット"},
+ situ:[], hero:["Ts","5s"], board:["Ah","Kd","7c"],
+ opts:[{label:"フォールド",grade:"best",note:"未練なく捨てる"},{label:"コール(粘り)",grade:"miss",note:"改善の見込みがほぼ無い"},{label:"チェックレイズ(ブラフ)",grade:"blunder",note:"相手のレンジに刺さりまくったボード"}],
+ exp:"AKハイのボードはレイザー(BTN)のレンジに強烈に当たっており、T5はペアも有効なドローもありません。この種の「エア」は未練なく捨てるのが正解で、粘るコールは損失の分割払いです。ブラフを企てるにも、相手が降りないボードでは成立しません。エアの処理速度は収支に直結します。",
+ pr:"エアは基本撤退。ブラフに転用するのは相手が降り得るボードとブロッカーがある時だけ。"},
+{cat:"postflop", level:2, title:"ドンクベットを我慢する",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"38bb",act:"COのレイズにBBでコール。フロップはあなたがトップペア。あなたが先に行動する番"},
+ situ:[], hero:["9c","8c"], board:["9h","6s","3d"],
+ opts:[{label:"チェック",grade:"best",note:"レイザーに打たせる"},{label:"ベット(ドンクベット)",grade:"miss",note:"レンジ不利の側から打っている"},{label:"チェックのつもりで悩む",grade:"miss",note:"時間を使うだけ"}],
+ exp:"トップペアを引いても、レンジ全体ではまだレイザー側が有利です(オーバーペアや強いエースはCO側に多い)。ここで自分から打つ「ドンクベット」は、強い手には呼ばれ弱い手を降らせるだけの損な設計になりがち。チェックして、Cベットに対してコール(または時々チェックレイズ)する方が、相手のブラフからも取れます。",
+ pr:"レンジ不利の側は基本チェック。ドンクベットは特別な理由がある時だけの技術。"},
+{cat:"postflop", level:2, title:"ペアボードへのCベット",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"40bb",act:"あなたがレイズ、BBがコール。フロップでBBがチェック"},
+ situ:[], hero:["Ac","Qd"], board:["8s","8d","3c"],
+ opts:[{label:"小さくベット(1/4〜1/3)",grade:"best",note:"ペアボードは高頻度・小サイズ"},{label:"チェック",grade:"ok",note:"消極的だが大過なし"},{label:"ポットサイズベット",grade:"miss",note:"降ろせる手からしか降りない"}],
+ exp:"883のようなペアボードはどちらのレンジにもほぼ当たっておらず、レンジ有利なレイザー側が小さいベットをほぼ全レンジで打てる典型的なボードです。AQはオーバーカード2枚のバックアップ付き。8を持たれている確率は低く、小さいサイズで相手のQハイ・Jハイ級を降ろすだけで十分に利益が出ます。",
+ pr:"誰にも当たっていないボードはレンジ有利側のもの。小さく高頻度に取りにいく。"},
+{cat:"postflop", level:3, title:"モノトーンボードの慎重さ",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"42bb",act:"あなたがレイズ、BBがコール。フロップは3枚同スート。BBがチェック"},
+ situ:[], hero:["Ah","Kd"], board:["9h","6h","2h"],
+ opts:[{label:"小さくベット(1/3)",grade:"best",note:"ナッツブロッカー持ちの理想形"},{label:"チェック",grade:"ok",note:"慎重策として成立"},{label:"ポットサイズベット",grade:"miss",note:"完成フラッシュしか相手にされない"}],
+ exp:"モノトーン(3枚同スート)ボードでは全員の手の価値が圧縮され、大きなベットは完成フラッシュにしか歓迎されません。基本は全員が小さいサイズを使う世界です。あなたはA♥を持っている=相手がナッツフラッシュを持てない(ブロッカー)+自分がターンで最強フラッシュを引き得る、という二重の強みがあり、小さいベットで主導権を握るのに最適な手です。",
+ pr:"モノトーンボードはサイズを落とす。A(キースート)のブロッカーは攻める資格。"},
+{cat:"postflop", level:2, title:"プロテクションベット",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"38bb",act:"あなたがレイズ、BBがコール。フロップでBBがチェック。あなたはオーバーペア"},
+ situ:[], hero:["8d","8c"], board:["7s","6s","2d"],
+ opts:[{label:"ベット(2/3ポット)",grade:"best",note:"脆い勝ち手は守りながら取る"},{label:"ミニベット",grade:"ok",note:"安すぎて引かれ放題"},{label:"チェック",grade:"miss",note:"無料で逆転カードを配っている"}],
+ exp:"88は今勝っている可能性が高い一方、9以上のカード(=デッキの大半)がターンに落ちるたびに景色が悪くなる「脆いバリュー」です。ウェットな766ボード…もとい7-6-2ツートーンでは、ドローと2枚のオーバーカードを持つ手に正しくない価格を突きつけつつ、今のうちに取る——プロテクション込みのしっかりしたベットが正解です。",
+ pr:"脆い勝ち手ほど今ベットする。「守りながら取る」がプロテクションベットの本質。"},
+{cat:"postflop", level:2, title:"ディレイCベット",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"40bb",act:"あなたがレイズしたがフロップは両者チェック。ターンであなたのQがヒットし、BBがチェック"},
+ situ:[], hero:["Ad","Qc"], board:["Kh","7d","2s","Qs"],
+ opts:[{label:"ベット(1/2〜2/3)",grade:"best",note:"遅れて打つ準備が実った"},{label:"チェック",grade:"miss",note:"2度目の無料カードは配りすぎ"},{label:"オールイン",grade:"blunder",note:"誰も呼ばない"}],
+ exp:"フロップをチェックで返した後、ターンで打つ「ディレイCベット」です。AQは2番目のペア+最強キッカーで明確なバリューになりました。相手のレンジはフロップのチェックコールすら経ておらず弱いままなので、ここから2ストリートで取りにいきます。再度のチェックは、相手のあらゆるドローと逆転カードに無料の抽選券を配る行為です。",
+ pr:"フロップを見送っても、ターンで状況が好転したら遅れてでも打つ(ディレイCベット)。"},
+{cat:"postflop", level:3, title:"完成したドローでリードする",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"36bb",act:"COのレイズにBBでコール。フロップは両者チェック。ターンであなたのストレートが完成。あなたから行動"},
+ situ:[], hero:["9h","7h"], board:["Qd","8s","6c","Th"],
+ opts:[{label:"ベット(リード)",grade:"best",note:"相手のチェックはレンジの弱さの自白"},{label:"チェック(罠)",grade:"ok",note:"相手が打ち返す保証がない"},{label:"小さすぎるベット",grade:"miss",note:"QxやJTから取り損ねる"}],
+ exp:"レイザーがフロップでチェックを返した時点で、相手のレンジは上限が切られています(強い手なら打っていたはず)。ターンでストレートが完成したあなたは、自分から打って(プローブ/リードベット)、相手のQxペアやドローから取りにいくのが最大化です。罠のチェックは、弱いレンジの相手が便乗チェックして終わるリスクが大きい。",
+ pr:"相手のチェックはレンジ情報。上限が切れた相手には完成した手で自分から打つ。"},
+{cat:"postflop", level:2, title:"フラッシュ完成ターンのチェックレイズ",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"CO",stk:"40bb",act:"あなたのCベットをBBがコール。ターンで3枚目のハートが落ち、あなたのベットにBB(堅実なアマチュア)がチェックレイズ"},
+ situ:[], hero:["Ad","Kc"], board:["Ks","9h","4h","2h"],
+ opts:[{label:"フォールド",grade:"best",note:"ライブの完成ボードのチェックレイズは本物"},{label:"コール",grade:"miss",note:"何に勝っているかを言えないコール"},{label:"オールイン",grade:"blunder",note:"最悪の選択"}],
+ exp:"理論上はブラフも混ざるべき局面ですが、ライブの中低額帯で「堅実な相手が、フラッシュ完成ターンに、わざわざチェックレイズ」してきた時のブラフ頻度は極端に低いのが実情です。TPTKはこの瞬間ただのブラフキャッチャー未満に格下げされており、『何に勝っているか』を具体的に言えないコールは寄付です。",
+ pr:"降りる時は手の絶対値でなく「勝っている相手の手を挙げられるか」で決める。"},
+{cat:"postflop", level:2, title:"2発目のバリューベット",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BTN(ボタン)",stk:"44bb",act:"あなたのフロップCベットをBBがコール。ターンは無害なカード。BBがチェック"},
+ situ:[], hero:["Kd","Qs"], board:["Qh","8d","4c","2s"],
+ opts:[{label:"ベット(2/3ポット)",grade:"best",note:"3ストリートの集金計画"},{label:"チェック(ポットコントロール)",grade:"ok",note:"強い手には消極的すぎる"},{label:"オールイン",grade:"miss",note:"サイズの飛躍に理由がない"}],
+ exp:"トップペア・良キッカーは、相手の劣るQx・8x・粘るポケットペアから2〜3ストリートで取れる手です。ターンの2は何のドローも完成させない無害なカードで、価値が変わっていない以上、集金を続けます。「フロップで打ったから一休み」に理論的根拠はありません。ポットコントロールはもっと弱い(マージナルな)手のための技術です。",
+ pr:"バリューは無害なターンで手を緩めない。ポットコントロールはマージナル専用。"},
+{cat:"postflop", level:3, title:"リバーの薄いバリュー",
+ metaG:{st:"トーナメント中盤",pl:"7人",pos:"BTN(ボタン)",stk:"35bb",act:"受け身な相手とのポット。リバーまで来て相手がチェック。あなたはトップペア弱キッカー"},
+ situ:[], hero:["Ad","9c"], board:["Ah","7d","4s","2c","8h"],
+ opts:[{label:"小さくベット(1/3)",grade:"best",note:"薄く、しかし確実に取る"},{label:"チェック",grade:"ok",note:"最も安全だが取り損ね"},{label:"大きくベット",grade:"miss",note:"呼ぶのは勝っている手ばかりになる"}],
+ exp:"A9は「大きく打つと勝っている手にしか呼ばれないが、小さくなら劣るAxや7xペアが払ってくれる」典型的な薄いバリューです。サイズを絞って集金するのが上級の集金術で、これを全部チェックで済ませる人と積み重ねられる人では長期の収支が明確に変わります。",
+ pr:"バリューベットのサイズは手の強さに比例させる。薄い手は小さく、それでも打つ。"},
+{cat:"postflop", level:3, title:"キャップされたレンジへのブラフ",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BTN(ボタン)",stk:"40bb",act:"あなたのレイズにBBがコール。フロップもターンも両者チェック。リバーでBBがまたチェック"},
+ situ:[], hero:["6d","5d"], board:["Kc","8h","3d","4s","9c"],
+ opts:[{label:"ベット(2/3ポット)",grade:"best",note:"ショーダウンでは絶対勝てない"},{label:"チェック",grade:"miss",note:"負けを確定させる選択"},{label:"オールイン",grade:"miss",note:"過剰サイズで効率が悪い"}],
+ exp:"3回のチェックで相手のレンジは弱さを自白しています(KxやセットならどこかでベットしたはずでKすら怪しい)。あなたの65はショーダウンで勝てる可能性がほぼゼロ——つまりベットで降ろす以外に勝ち筋がなく、失うものは最小です。「勝てない手+弱いと自白した相手」はブラフの必要十分条件です。",
+ pr:"ショーダウン価値ゼロの手は、相手のレンジが弱いと分かった時点でブラフに転用する。"},
+{cat:"postflop", level:3, title:"オーバーベットへの対応",
+ metaG:{st:"トーナメント中盤",pl:"7人",pos:"BB",stk:"33bb",act:"リバーで相手(アマチュア)が突然2倍ポットのオーバーベット。あなたはツーペア"},
+ situ:[], hero:["7c","5c"], board:["Qh","7d","5s","2c","9d"],
+ opts:[{label:"フォールド",grade:"best",note:"ライブのオーバーベットはナッツ級"},{label:"コール",grade:"ok",note:"理論上は守る側の手"},{label:"レイズ",grade:"blunder",note:"より強い手にしか呼ばれない"}],
+ exp:"オーバーベットは理論上「ナッツ級とブラフの二極」で構成されますが、ライブのアマチュアの2倍ポットは圧倒的にナッツ側(ここでは97/QQ/99級)に偏ります。ボトムツーペアは見た目より弱いブラフキャッチャーで、必要勝率40%をライブの実態ブラフ頻度(数%)が大きく下回る以上、降りるのが実利です。理論的にはコールもあり得るため許容としますが、傾向情報がある限り降りが優位です。",
+ pr:"オーバーベット=ポラライズ。相手のブラフ側の中身を言えないならコールしない。"},
+{cat:"postflop", level:1, title:"ショートスタックの単純化",
+ metaG:{st:"トーナメント終盤",pl:"8人",pos:"BB",stk:"12bb",act:"BTNのミニレイズにBBでコール。フロップであなたがトップペア。BTNが1/3ポットをベット"},
+ situ:[], hero:["9h","8h"], board:["9c","6d","2s"],
+ opts:[{label:"チェックレイズ(オールイン)",grade:"best",note:"守る+取る+単純化の三得"},{label:"コール",grade:"ok",note:"悪くないが難しいターンが来る"},{label:"フォールド",grade:"miss",note:"12bbでトップペアを降りない"}],
+ exp:"残り12bbのトップペアは実質モンスターです。オールインすれば、①オーバーカード2枚の手の逆転を拒否し、②ブラフや弱いペアの継続分を取り切り、③以降の難しい判断を全部消せます。浅いスタックの美徳は「単純化できること」——deepなら難しいこの局面が、12bbなら考えなくてよい局面になります。",
+ pr:"浅いスタックのトップペアは複雑に考えない。先に全部入れて判断を単純化する。"},
+{cat:"postflop", level:2, title:"3発目を払わない",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"36bb",act:"相手がフロップ1/2、ターン2/3と打ち続け、リバーでポットサイズの3発目"},
+ situ:[], hero:["Qs","Th"], board:["Qd","7c","3h","8s","4d"],
+ opts:[{label:"フォールド",grade:"best",note:"3バレルは強さの宣言"},{label:"コール",grade:"miss",note:"弱キッカーTPで全額払っている"},{label:"レイズ",grade:"blunder",note:"論外"}],
+ exp:"フロップ・ターン・リバーと3回打ち切る「トリプルバレル」は、ライブの中低額帯では極めてバリューに偏ったラインです。QTのトップペアは1〜2発目までは十分に受けられますが、3発目の大きいベットまで全額払う手ではありません。「どこまで付き合う手か」を最初に決めておくと、リバーで迷わなくなります。",
+ pr:"トップペアには「支払い上限」を設定する。弱キッカーは2発まで、3発目は降りる。"},
+{cat:"postflop", level:2, title:"オーバーペアの見切り",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"HJ",stk:"40bb",act:"あなたのCベットをBBがコール。ターンでAが落ちると、BBが突然大きくリードしてきた"},
+ situ:[], hero:["Qh","Qc"], board:["8d","5c","2s","As"],
+ opts:[{label:"フォールド",grade:"best",note:"最悪のカード+強さの宣言"},{label:"コール",grade:"miss",note:"「QQだから」の思考停止"},{label:"レイズ",grade:"blunder",note:"Axに全額進呈"}],
+ exp:"QQにとってターンのAは最悪のカードで、しかもフロップをチェックコールした相手が突然打ってくるラインはAxの完成を強く示唆します(ライブではほぼ純粋バリュー)。プリフロップで強かった手ほど見切りが遅れがちですが、手の強さは絶対値ではなく、ボードと相手のアクションで常に再評価されるべき相対値です。",
+ pr:"「良い手だったから」は継続の理由にならない。ボードが変わったら手の価値も再計算。"},
+{cat:"postflop", level:2, title:"弱キッカーのAヒット",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BB",stk:"34bb",act:"BTNのレイズにコール。あなたのAがヒットし、フロップの小さいCベットはコール。ターンの大きめのベットもコール。リバーで相手がポットサイズの3発目"},
+ situ:[], hero:["Ac","4c"], board:["Ad","9s","6h","Kd","2c"],
+ opts:[{label:"フォールド",grade:"best",note:"キッカー負けの支払いを打ち切る"},{label:"コール",grade:"miss",note:"AJ以上に3ストリート全額進呈"},{label:"レイズ",grade:"blunder",note:"意味を成さない"}],
+ exp:"A4のAヒットは「1〜2回は受けられるが、最後まで払う手ではない」の典型です。リバーまで打ち切ってくる相手のAxはほぼ全てあなたのキッカーに勝っており(A9〜AK)、勝っているのは相手が途中で諦めたブラフだけ——それは既にフロップ・ターンのコールで釣り終わっています。逆ドミネーションの授業料を最小に抑えるのがこの手の技術です。",
+ pr:"弱キッカーのトップペアは途中下車する手。全ストリート支払うのはキッカー勝ちの時だけ。"},
+{cat:"postflop", level:3, title:"バックドアの粘り",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BTN(ボタン)",stk:"45bb",act:"COのレイズにBTNでコール。フロップでCOが1/3ポットのCベット"},
+ situ:[], hero:["Jd","Td"], board:["8d","4c","2s"],
+ opts:[{label:"コール",grade:"best",note:"安い価格+伸びしろの束"},{label:"レイズ",grade:"ok",note:"ブラフとして成立"},{label:"フォールド",grade:"miss",note:"見えない資産を捨てている"}],
+ exp:"JTスーテッドは今は何もありませんが、①オーバーカード2枚 ②バックドアフラッシュ(ターンのダイヤで本物のドローに昇格) ③バックドアストレート、と「ターンで強いドローに化ける組み合わせ」を大量に持っています。1/3ポットの価格なら、この見えない資産+ポジションで十分に続行できます。安いベットへのフォールドは、こうした資産の存在を見落とした時に起こります。",
+ pr:"フロップは完成形だけでなく「ターンで何に化けるか」まで含めて手を評価する。"},
+{cat:"postflop", level:2, title:"危険なターンのポットコントロール",
+ metaG:{st:"トーナメント中盤",pl:"8人",pos:"BTN(ボタン)",stk:"42bb",act:"あなたのフロップCベットをBBがコール。ターンでストレートが複数完成し得る9が落ち、BBがチェック"},
+ situ:[], hero:["Kh","Jc"], board:["Jd","8c","4h","9s"],
+ opts:[{label:"チェック",grade:"best",note:"景色が悪くなったら一休み"},{label:"小さくベット",grade:"ok",note:"プロテクション寄りの妥協"},{label:"大きくベット",grade:"miss",note:"呼ぶレンジに勝てなくなった"}],
+ exp:"ターンの9はT7・QT等のストレートを完成させ、BBのコールレンジ(コネクター類)にこそ刺さるカードです。KJのトップペアは一つ前の問題(Q84の無害な2)とは逆で、価値が相対的に下がりました。ここで大きく打つと「呼ぶのは自分に勝つ手だけ」になりがち。チェックで1ストリート分ポットを抑え、安くショーダウンに向かう——同じトップペアでもターンのカード次第で方針が反転する好例です。",
+ pr:"ターンカードごとに手を再分類する。バリュー→マージナルに落ちたらポットコントロール。"}
+];
+SCENARIOS.push(...POSTFLOP2);
+
+Object.assign(LEARN, {
+"ポジションを活かすフロート":"①相手のCベットサイズ(小=広いレンジ) ②自分の伸びしろ(オーバーカード+バックドア) ③ポジションの有無。3つ揃えばコールして後の奪取を狙う。",
+"フラッシュドローの受け方(OOP)":"①必要勝率(1/2ポット=25%) ②FDは2枚で約35% ③インプライドオッズ加算→コール。強いドローなら攻め、弱いドローは受け。",
+"完全に外れた時の撤退":"①ボードと相手レンジの相性(AKxはレイザー側) ②自分の伸びしろゼロを確認 ③即撤退。粘りは損失の分割払い。",
+"ドンクベットを我慢する":"①自分がレンジ不利側だと自覚 ②チェックで相手のCベットを誘う ③コール/チェックレイズで対応。ドンクは原則封印。",
+"ペアボードへのCベット":"①ペアボード=どちらにも当たっていない ②レンジ有利側が小さく高頻度 ③オーバーカードのバックアップ確認。",
+"モノトーンボードの慎重さ":"①3枚同スートは全員の手の価値が圧縮 ②サイズは全体的に小さく ③キースートのAブロッカーがあれば攻める資格。",
+"プロテクションベット":"①今勝っているか ②どれだけのカードで逆転されるか(脆さ) ③脆いほど今しっかり打つ。",
+"ディレイCベット":"①フロップを見送った理由が解消したか(ヒット/相手の弱さ確認) ②ターンで遅れて打つ ③2度目の無料カードは配らない。",
+"完成したドローでリードする":"①相手のチェックバック=レンジ上限の自白 ②完成したら自分から打つ ③罠は相手が打ってくれる根拠がある時だけ。",
+"フラッシュ完成ターンのチェックレイズ":"①ボード変化(フラッシュ完成)を認識 ②相手タイプ(堅実)×ライン(チェックレイズ)の意味 ③勝っている手を挙げられなければ降りる。",
+"2発目のバリューベット":"①ターンカードが無害か判定 ②無害なら集金継続 ③手を緩めるのはボードが悪化した時だけ。",
+"リバーの薄いバリュー":"①相手の呼べる下位の手を列挙 ②それが呼べるサイズに絞る ③「チェックで安全」は取り損ねの言い換え。",
+"キャップされたレンジへのブラフ":"①自分のショーダウン勝率(ゼロ?) ②相手のレンジ上限(チェック続き=弱い) ③両方Yesならベットが唯一の勝ち筋。",
+"オーバーベットへの対応":"①オーバーベット=二極(ナッツかブラフ) ②相手のブラフ側の手を具体的に挙げられるか ③挙げられなければ降りる。",
+"ショートスタックの単純化":"①SPR確認(低い=単純化可能) ②トップペアは実質モンスター ③先に入れて判断を消す。",
+"3発目を払わない":"①相手のラインの強さ(3バレル=最強クラスの宣言) ②自分の手の支払い上限を事前に設定 ③上限を超えたら機械的に降りる。",
+"オーバーペアの見切り":"①ターンカードが相手レンジを強化したか(A) ②相手のライン変化(受け身→攻め) ③プリフロップの強さを引きずらない。",
+"弱キッカーのAヒット":"①キッカーの弱さを自覚 ②「何発まで払うか」を先に決める(弱キッカー=2発) ③3発目は降りる。",
+"バックドアの粘り":"①完成形だけでなくターンでの昇格可能性を数える ②価格(1/3ポット)と見合うか ③ポジション込みで判断。",
+"危険なターンのポットコントロール":"①ターンカードで手を再分類 ②バリュー→マージナルへ降格したらチェック ③「フロップで打ったから続ける」は理由にならない。"
+});
+
+// ポストフロップ思考フレームワーク(知識カード)
+CARDS.push(
+{d:"pf", q:"フロップ以降のアクション順は?",
+ o:[{t:"SB→BB→…→ボタンの順(ブラインドが最初、ボタンが最後)",ok:1},{t:"プリフロップと同じくUTGから"},{t:"ボタンから始まる"},{t:"直前に最後にレイズした人から"}],
+ e:"プリフロップだけが例外(強制ベット済みのブラインドが最後)。フロップ以降は毎回ブラインド側から始まるため、BBはCOより先に行動する。ボタンが常に最後=全ストリートで相手を見てから決められる、これがポジション価値の正体。"},
+{d:"pf", q:"フロップで最初に確認すべきことは?",
+ o:[{t:"このボードがどちらのレンジに有利か",ok:1},{t:"自分の手が当たったかどうか"},{t:"相手のチップ量"},{t:"直前のハンドの流れ"}],
+ e:"手札の強さは2番目。レンジ対レンジの有利不利が、ベットの頻度とサイズの土台を決める(K72はレイザー有利、JT9はコーラー有利)。"},
+{d:"pf", q:"ポストフロップの手の4分類は?",
+ o:[{t:"バリュー/マージナル/ドロー/エア",ok:1},{t:"ペア/ツーペア/トリップス/ストレート"},{t:"強い/弱い"},{t:"スーテッド/オフスート"}],
+ e:"役の名前ではなく「役割」で分類する。分類が決まればアクションの型(育てる/安く見る/価格判断/撤退かブラフ)が自動的に決まる。"},
+{d:"pf", q:"マージナル(中程度)の手の基本方針は?",
+ o:[{t:"ポットを小さく保ち、安くショーダウンへ向かう",ok:1},{t:"大きく育てる"},{t:"常に降りる"},{t:"ブラフに転用する"}],
+ e:"中程度の手は大きいポットで勝てない(大きく育つ=相手が強い)。ポットコントロールはこのクラス専用の技術。"},
+{d:"pf", q:"エア(何もない手)の基本方針は?",
+ o:[{t:"基本は撤退。ブラフするならブロッカーと相手の弱さの根拠がある時",ok:1},{t:"常に粘る"},{t:"常にブラフする"},{t:"常にチェックコール"}],
+ e:"エアの処理速度が収支を決める。ブラフは「勝てない手の中から、条件の良いものを選抜する」作業であって全数で行うものではない。"},
+{d:"pf", q:"バリューハンドの基本方針は?",
+ o:[{t:"ベットで育てる。取り逃しが最大の損",ok:1},{t:"罠を張ってチェック"},{t:"小さく安全に"},{t:"相手に打たせる"}],
+ e:"利益の本体はブラフではなくバリューの集金。スロープレイが正当化されるのはドライボードで相手が打ってくれる根拠がある時だけ。"},
+{d:"pf", q:"ドローの基本方針は?",
+ o:[{t:"価格が合えば続行。強いドローは攻めに転用",ok:1},{t:"常にコール"},{t:"常にフォールド"},{t:"常にレイズ"}],
+ e:"弱いドロー=価格の問題(必要勝率と比較)。強いドロー(コンボ等)=セミブラフでフォールドエクイティも取りにいく。"},
+{d:"pf", q:"マルチウェイ(3人以上)になると何が変わる?",
+ o:[{t:"ブラフ頻度を下げ、バリューの基準を上げる",ok:1},{t:"何も変わらない"},{t:"ブラフを増やす"},{t:"全員降りるまでベット"}],
+ e:"「誰か1人でも強い確率」が人数分掛け算で増える。ヘッズアップの頻度をそのまま持ち込むのが最も典型的なミス。"},
+{d:"pf", q:"リバーの構造的な特徴は?",
+ o:[{t:"ドローが消滅し、純粋なバリューかブラフかの二択になる",ok:1},{t:"最も運の要素が強い"},{t:"常にチェックすべき"},{t:"エクイティが変動し続ける"}],
+ e:"リバーでは全ての手の勝敗が確定済み。「勝っているなら取る、負けているなら降ろすか諦める」の二択に整理される。だからブラフ比率の数学が最も純粋に効く。"}
+);
+
+// ===== 序盤・ディープスタック(生存戦略) =====
+const EARLY_SCENARIOS=[
+{cat:"early", level:1, title:"セットマインの実行",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"150bb",act:"MP(あなたと同等の深さ)が3bbにレイズ。あなたに回ってきた"},
+ situ:[], hero:["4c","4d"], board:[],
+ opts:[{label:"コール(セットマイン)",grade:"best",note:"ディープ最強の投資"},{label:"3ベット",grade:"miss",note:"小ペアの良さを自分で消す"},{label:"フォールド",grade:"miss",note:"採算の合う投資を見送っている"}],
+ exp:"3bbの投資で、約12%で引くセットが相手の150bbを丸ごと狙えます——これがディープ限定の「セットマイン」の採算構造です。目安は『レイズ額の15〜20倍の残スタックがあるか』で、150bbなら余裕でクリア。40bb時代に学んだ「22はレイズ寄り」と逆の答えになるのは、スタックの深さが手の価値を変えるからです。",
+ pr:"セットマインの採算=相手のスタック÷参加費。深いほど小ペアの価値は上がる。"},
+{cat:"early", level:2, title:"オーバーリンプの例外",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"120bb",act:"前に3人がリンプ(コール参加)。あなたに回ってきた"},
+ situ:[], hero:["6h","5h"], board:[],
+ opts:[{label:"リンプ(便乗)",grade:"best",note:"「リンプ禁止」の正当な例外"},{label:"レイズ",grade:"ok",note:"誰も降りない卓では孤立化の意味が薄い"},{label:"フォールド",grade:"miss",note:"格安の宝くじを見送っている"}],
+ exp:"「リンプ禁止」の原則には例外があります:①既に複数のリンパーがいて ②自分の手が投機的(スーテッドコネクター・小ペア)で ③スタックが深い時です。1bbで4人の膨らむポットに入り、強く当たった時だけ大きく取る——これはオープンリンプ(先頭からのリンプ)とは別物の、採算の取れた便乗です。誰も降りない甘い卓でのレイズは、ポットを膨らませるだけで主導権の価値が薄い。",
+ pr:"禁止されているのは先頭からのリンプ。多人数×投機的ハンド×ディープの便乗リンプは技術。"},
+{cat:"early", level:2, title:"逆ドミネーションの回避",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"MP",stk:"200bb",act:"タイトなUTGが3bbにレイズ。あなたに回ってきた"},
+ situ:[], hero:["Ah","Jc"], board:[],
+ opts:[{label:"フォールド",grade:"best",note:"綺麗に見える手ほど危ない"},{label:"コール",grade:"miss",note:"当たっても負ける構図"},{label:"3ベット",grade:"blunder",note:"AK/AAに突っ込んでいく"}],
+ exp:"AJoはディープで最も高くつく手の一つです。タイトなUTGのレンジ(AK/AQ/大ペア中心)に対し、Aが当たった時こそキッカー負けで大きく支払う「逆インプライドオッズ」の構図。浅いスタックなら優秀なAJoが、200bbでは罠になる——ディープでは『当たった時に勝てるか』でなく『大きなポットになった時に勝てるか』で手を選びます。",
+ pr:"ディープではオフスートのブロードウェイの価値が下がる。当たって負ける手を避ける。"},
+{cat:"early", level:1, title:"ワンペアで飛ばない",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"CO",stk:"180bb",act:"あなたのCベットに相手がチェックレイズ。コールしたところ、ターンで相手がさらに大きなベット(この流れは全額に発展しそう)"},
+ situ:[], hero:["As","Kh"], board:["Kd","9c","5h","2d"],
+ opts:[{label:"フォールド",grade:"best",note:"ワンペアは中ポットまでの手"},{label:"コール",grade:"miss",note:"どこかで止まれなくなる"},{label:"レイズ",grade:"blunder",note:"セット以上に全額進呈"}],
+ exp:"これが序盤に飛ぶ人の典型パターンの正反対です。SPRが高いディープでは、TPTKですら「中サイズのポットまでの手」で、180bbが全部入る展開はセット・ツーペア以上の世界。相手が2度も大きく打ってくるラインに対し、ワンペアで付き合い続ける理由がありません。終盤(14bb)で学んだ「トップペアはコミット」と正反対なのは、SPRが違うからです。",
+ pr:"大きなポットには大きな手。ディープのワンペアでスタックを賭けない——序盤生存の第一条。"},
+{cat:"early", level:1, title:"序盤でも参加はレイズから",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"CO",stk:"180bb",act:"全員フォールドであなたに回ってきた"},
+ situ:[], hero:["7d","6d"], board:[],
+ opts:[{label:"レイズ(2.5bb)",grade:"best",note:"参加の仕方は序盤も同じ"},{label:"リンプ(オープンリンプ)",grade:"miss",note:"先頭からのリンプは序盤でも非推奨"},{label:"フォールド",grade:"ok",note:"タイトな判断としては許容"}],
+ exp:"序盤に変わるのは『どの手で参加するか』(76sのようなスーテッドコネクターの価値が上がる)であって、『参加の仕方』ではありません。誰も入っていないポットに先頭から入るなら、序盤でもレイズが基本です。前問の便乗リンプ(既にリンパーがいる)との違いに注意——リンプが正当化されるのは後ろから乗る時だけです。",
+ pr:"オープンはレイズ、便乗はリンプ可。「先頭か後ろか」でリンプの可否が分かれる。"},
+{cat:"early", level:2, title:"KQoの見送り",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"160bb",act:"引き締まったUTGが3bbにレイズ、MPがコール。あなたに回ってきた"},
+ situ:[], hero:["Kc","Qh"], board:[],
+ opts:[{label:"フォールド",grade:"best",note:"見た目より分の悪い勝負"},{label:"コール",grade:"miss",note:"ドミネートされる側での参戦"},{label:"3ベット",grade:"miss",note:"降ろせない相手に張っている"}],
+ exp:"KQoは終盤なら喜んでプッシュする手ですが、ディープのUTGレイズ+コーラーありの場面では、AK・AQ・KK・QQといった「KQを支配する手」だらけのレンジに向かって、オフスートの凡庸なプレイアビリティで挑むことになります。ポジションがあっても、当たった時に2番手になりやすい構図は変わりません。この見送りが積み重なって序盤の生存率を作ります。",
+ pr:"手の強さは文脈で決まる。終盤のプッシュ候補が序盤のフォールド候補になり得る。"},
+{cat:"early", level:2, title:"ナッツ級は育てる",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BB",stk:"140bb",act:"3人ポット。フロップであなたはナッツストレートが完成。COがベットしてきた"},
+ situ:[], hero:["8s","7s"], board:["9d","6c","5h"],
+ opts:[{label:"レイズ(3倍)",grade:"best",note:"大きなポットを作れる手が来た"},{label:"コールのみ",grade:"miss",note:"ポットが育たず逆転リスクも放置"},{label:"ミニレイズ",grade:"ok",note:"方向は正しいがサイズ不足"}],
+ exp:"『大きなポットには大きな手』の攻め側です。ナッツストレートはまさに140bbを入れにいける手で、相手がベットしてくれた今がポットを育てる最良の機会。マルチウェイでツーペアやセットが相手にいる可能性も高く、彼らから最大限取るためにも、逆転ドローを追い出すためにも、しっかりレイズします。序盤の生存戦略は「大きく張らない」ではなく「張る手を選ぶ」ことです。",
+ pr:"生存戦略=選別であって萎縮ではない。ナッツ級が来たらディープでも最大限育てる。"},
+{cat:"early", level:1, title:"AAは序盤でも全部入れる",
+ metaG:{st:"トーナメント序盤(ディープ)",pl:"9人",pos:"BTN(ボタン)",stk:"200bb",act:"あなたのレイズにSBが3ベット。あなたの4ベットに、SBが5ベットオールイン(200bb)"},
+ situ:[], hero:["Ac","Ad"], board:[],
+ opts:[{label:"コール",grade:"best",note:"生存戦略はAAを降りることではない"},{label:"フォールド",grade:"blunder",note:"「序盤だから」の誤った拡大適用"}],
+ exp:"「序盤は大きなポットを避ける」はワンペアで*なってしまう*大ポットを避ける話であって、プリフロップのAAという「常に最有利で全額入れられる唯一の手」まで避ける話ではありません。5ベットオールインのレンジ(KK/QQ/AK中心)に対してAAは約85%。これを避けて得られる「生存」に価値はありません。生存戦略を過剰学習して勝負弱くなるのが、この段階の最後の落とし穴です。",
+ pr:"選別の結論がGOなら躊躇しない。序盤のAAプリフロップオールインは常にコール。"}
+];
+SCENARIOS.push(...EARLY_SCENARIOS);
+
+Object.assign(LEARN, {
+"セットマインの実行":"①残スタック÷参加費≧15〜20倍か ②相手は深く払える相手か ③セットを引くまでは安く、引いたら大きく。誤解:小ペアはいつでもレイズ(それは40bb以下の話)。",
+"オーバーリンプの例外":"①先頭でなく便乗か ②手が投機的か(小ペア/SC) ③深いか。3条件が揃った時だけリンプ解禁。誤解:リンプは無条件で悪手。",
+"逆ドミネーションの回避":"①相手のレンジ(タイトUTG=AK/AQ/大ペア) ②自分のAが当たった時に勝てるか ③ディープほどキッカー負けの支払いが大きい→見送り。",
+"ワンペアで飛ばない":"①SPRを確認(高い=ワンペアは中ポットまで) ②相手の連続攻撃=セット以上のシグナル ③『まだトップペアだから』は継続理由にならない。",
+"序盤でも参加はレイズから":"①先頭ならレイズ一択 ②序盤に変わるのは参加ハンドの中身(SC・小ペア↑、オフスートブロードウェイ↓) ③オープンリンプと便乗リンプを区別。",
+"KQoの見送り":"①レイズ+コールの後=レンジが引き締まっている ②KQoが当たって勝てる相手が少ない ③終盤のプッシュ価値とディープの参加価値は別物。",
+"ナッツ級は育てる":"①自分の手はスタック全部を入れられるクラスか ②Yesならポットを育てる機会を逃さない ③マルチウェイ+ドローありなら尚更大きく。",
+"AAは序盤でも全部入れる":"①生存戦略の対象は「マージナルな大ポット」 ②AAのプリフロ全額は常に+EV ③避けるべきリスクと取るべきリスクを混同しない。"
+});
+
+// 序盤・ディープの知識カード
+CARDS.push(
+{d:"early", q:"トーナメント序盤の主な目的は?",
+ o:[{t:"情報収集と仕込み(誰が甘いか・誰が曲がらないか)",ok:1},{t:"できるだけ早くチップを倍にする"},{t:"1ハンドも参加せず温存する"},{t:"ブラインドを盗み続ける"}],
+ e:"序盤の小さいポットで買った相手情報は、1判断の価値が跳ね上がる中盤以降に利息付きで回収される。倍増も温存も目的ではない。"},
+{d:"early", q:"ディープスタックで価値が上がる手は?",
+ o:[{t:"小ペア・スーテッドコネクター・スーテッドA",ok:1},{t:"AJo・KQoなどオフスートブロードウェイ"},{t:"どの手も同じ"},{t:"ハイカード全般"}],
+ e:"「完成すれば相手のスタック全部を狙える手」の価値が上がり(インプライドオッズ)、「当たってもワンペア止まりの手」は逆に下がる。終盤と序列が逆転する。"},
+{d:"early", q:"「大きなポットには大きな手」の意味は?",
+ o:[{t:"スタックが全部入る展開はセット・ツーペア以上の世界",ok:1},{t:"強い手は必ず大きくベットする"},{t:"大きなポットには参加しない"},{t:"ブラフは大きく打つ"}],
+ e:"SPRが高いディープでは、ワンペアは中ポットまでの手。序盤に飛ぶ人の大半は、この規律を破ってワンペアで200bbを入れた人。"},
+{d:"early", q:"序盤にブラインドを盗む価値が低い理由は?",
+ o:[{t:"アンティが無く、報酬(1.5bb)がスタックに対して小さすぎる",ok:1},{t:"盗みはマナー違反だから"},{t:"序盤はブラフ禁止だから"},{t:"低くない(常に盗むべき)"}],
+ e:"150bb持ちにとって1.5bbは資産の1%。リスクに見合わないためオープンはバリュー寄りになる。アンティが入る中盤から盗みの価値が跳ね上がる。"},
+{d:"early", q:"「スモールボール」戦略とは?",
+ o:[{t:"小さいポットを多数こなして技術差で削り、際どい大勝負を避ける",ok:1},{t:"小さい手だけで参加する"},{t:"常にミニベットを使う"},{t:"短時間で切り上げる"}],
+ e:"技術優位があるほど、1発の大フリップより多数の小さい優位の積み重ねが得。ライブの甘いフィールドで特に有効な序盤運用。"},
+{d:"early", q:"序盤の生存戦略の正体は?",
+ o:[{t:"ポットサイズと相手の「選別」(萎縮してパッシブになることではない)",ok:1},{t:"できるだけ降りること"},{t:"強い手でも安全にコールで済ませること"},{t:"参加数を最小にすること"}],
+ e:"マージナルな手で大ポットを作らない・強い相手と大きく戦わない、が生存の中身。ナッツ級が来たら序盤でも最大限張る。選別とパッシブの混同が次の落とし穴。"}
+);
+
+// ===== 統合アダプティブエンジン v2(モバイルファースト固定画面構造) =====
+const GRADE_INFO = {
+  best:{jp:"最善",pts:+15,cls:"best"}, ok:{jp:"許容",pts:+5,cls:"ok"},
+  miss:{jp:"ミス",pts:-10,cls:"miss"}, blunder:{jp:"大ミス",pts:-25,cls:"blunder"}
+};
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const el=id=>document.getElementById(id);
+
+function nodeOfCard(c){
+  const t=c.q+c.e;
+  if(c.d==="gto") return "gto";
+  if(c.d==="pf") return "postflop";
+  if(c.d==="early") return "early";
+  if(c.d==="nash") return "nash-"+(detectSpot(t)||"sb10");
+  if(c.d==="icm"){
+    if(/サテライト/.test(t)) return "icm-sat";
+    if(/バブル|ICM|ペイジャンプ|カバー/.test(t)) return "icm";
+    return "principle";
+  }
+  if(/[AKQJT98765432]{2}[os]? vs /.test(t)) return "matchup";
+  if(/ブラフ|MDF/.test(t)) return "bluff";
+  if(/必要な勝率|必要勝率|コールに必要/.test(t)) return "odds";
+  if(/アウツ|ドロー|セット|ヒット/.test(t)) return "outs";
+  return "principle";
+}
+function nodeOfScenario(q){
+  if(q.spot) return "nash-"+q.spot;
+  if(q.cat==="postflop") return "postflop";
+  if(q.cat==="gto") return "gto";
+  if(q.cat==="early") return "early";
+  if(q.cat==="push") return "nash-"+(detectSpot(q.title+q.situ.join(""))||"sb10");
+  if(q.cat==="open") return "open";
+  if(q.cat==="icm") return /サテライト/.test(q.title)?"icm-sat":"icm";
+  return "odds";
+}
+const ITEMS=[
+  ...CARDS.map(c=>({type:"know", ref:c, node:nodeOfCard(c), box:1})),
+  ...SCENARIOS.map(q=>({type:"judge", ref:q, node:nodeOfScenario(q), box:1}))
+];
+const GROUP_LIST=[["outs","アウツ&勝率"],["odds","オッズ判断"],["bluff","ブラフ&MDF"],["matchup","マッチアップ"],["open","オープンレンジ"],["postflop","ポストフロップ"],["gto","GTO理論"],["early","序盤・ディープ"],["nash","ナッシュP/F"],["icm","ICM&バブル"],["icm-sat","サテライト"],["principle","原則"]];
+const groupOf=n=>n.startsWith("nash-")?"nash":n;
+const groupLabel=n=>(GROUP_LIST.find(g=>g[0]===groupOf(n))||["","その他"])[1];
+
+const state={mode:"mix", chartSpot:"sb10", cfix:"pos", cpos:"SB", cstk:10, rating:1200, xp:0, streak:0, answered:0,
+  counts:{best:0,ok:0,miss:0,blunder:0}, priority:[], lastIdx:-1, current:-1, locked:false};
+
+function mastery(node){
+  const ks=ITEMS.filter(it=>it.type==="know"&&it.node===node);
+  if(!ks.length) return 0.7;
+  return ks.filter(it=>it.box>=3).length/ks.length;
+}
+function pickNext(){
+  if(state.priority.length){ state.current=state.priority.shift(); return; }
+  let pool=ITEMS.map((it,i)=>({it,i})).filter(x=>x.i!==state.lastIdx);
+  if(state.mode==="judge") pool=pool.filter(x=>x.it.type==="judge");
+  else if(state.mode==="know") pool=pool.filter(x=>x.it.type==="know");
+  const ms={};
+  const w=x=>{
+    let base=Math.pow(2,5-x.it.box);
+    if(state.mode==="mix"){
+      const m = ms[x.it.node]!==undefined ? ms[x.it.node] : (ms[x.it.node]=mastery(x.it.node));
+      base *= x.it.type==="judge" ? (0.3+0.9*m) : (1.2-0.9*m);
+    }
+    return base;
+  };
+  const tot=pool.reduce((s,x)=>s+w(x),0);
+  let r=Math.random()*tot;
+  for(const x of pool){ r-=w(x); if(r<=0){ state.current=x.i; return; } }
+  state.current=pool[pool.length-1].i;
+}
+function nextItem(){ pickNext(); state.locked=false; render(); }
+function render(){
+  const it=ITEMS[state.current];
+  if(it.type==="judge") renderJudge(it); else renderKnow(it);
+  renderChips();
+  el("content").scrollTop=0;
+}
+
+// --- 判断問題 ---
+function renderJudge(it){
+  const q=it.ref;
+  const opts=shuffle(q.opts.map(o=>({...o})));
+  const m=q.metaG||META[q.title];
+  const glossText=q.title+(m?Object.values(m).join(""):q.situ.join(""))+q.exp+q.pr+q.opts.map(o=>o.label).join("");
+  el("content").innerHTML=`
+    <div class="qmeta">
+      <span class="tag">🃏 判断</span>
+      <span class="tag">${groupLabel(it.node)}</span>
+      <span class="stars">${"★".repeat(q.level)}${"☆".repeat(3-q.level)}</span>
+      ${q.edge?'<span class="tag review">キワ(境界)</span>':""}
+      <span class="tag">箱${it.box}</span>
+    </div>
+    <div class="qtitle">${q.title}</div>
+    <div class="situ">
+      ${m?`
+      <div class="srow"><span class="slbl">【シチュエーション】</span>${m.st}</div>
+      <div class="srow"><span class="slbl">【テーブル人数】</span>${m.pl}</div>
+      <div class="srow"><span class="slbl">【ポジション】</span>${m.pos}</div>
+      <div class="srow"><span class="slbl">【スタック】</span>${m.stk}</div>
+      <div class="srow"><span class="slbl">【状況】</span>${m.act}</div>`
+      : q.situ.map(l=>`<div>${l}</div>`).join("")}
+      <div class="cards-row"><span class="cards-lbl">【ハンド】</span>${q.hero.map(cardHTML).join("")}</div>
+      <div class="cards-row"><span class="cards-lbl">【ボード】</span>${q.board.length?q.board.map(cardHTML).join(""):'<span class="noboard">(プリフロップ)</span>'}</div>
+    </div>
+    ${glossHTML(glossText)}
+    <div class="fb" id="fb"></div>`;
+  const abar=el("abar");
+  abar.classList.remove("answered");
+  abar.innerHTML=`<div class="abar-note">▶ あなたのアクションは?</div>`+
+    opts.map(o=>`<button class="opt g-${o.grade}" data-g="${o.grade}">${o.label}<span class="g-label"></span></button>`).join("");
+  abar.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answerJudge(b,it));
+}
+function answerJudge(btn,it){
+  if(state.locked)return; state.locked=true;
+  const q=it.ref, g=btn.dataset.g, info=GRADE_INFO[g];
+  state.answered++; state.lastIdx=state.current;
+  state.rating=Math.max(800,state.rating+info.pts);
+  state.counts[g]++;
+  if(g==="best"){state.streak++; it.box=Math.min(5,it.box+1);}
+  else if(g==="ok"){state.streak++;}
+  else {state.streak=0; it.box=1;}
+  let injected=0;
+  if(state.mode==="mix"&&(g==="miss"||g==="blunder")){
+    ITEMS.map((x,i)=>({x,i}))
+      .filter(o=>o.x.type==="know"&&o.x.node===it.node&&o.x.box<4&&!state.priority.includes(o.i)&&o.i!==state.current)
+      .sort((a,b)=>a.x.box-b.x.box).slice(0,2)
+      .forEach(o=>{state.priority.push(o.i); injected++;});
+  }
+  const abar=el("abar");
+  abar.classList.add("answered");
+  abar.querySelectorAll(".opt").forEach(b=>{
+    b.classList.add("revealed");
+    b.querySelector(".g-label").textContent=GRADE_INFO[b.dataset.g].jp+(b.dataset.g==="best"?" ✓":"");
+    b.onclick=null;
+  });
+  btn.classList.add("picked");
+  abar.insertAdjacentHTML("beforeend",'<button class="nextbtn" id="nextbtn">次へ ▶</button>');
+  el("nextbtn").onclick=nextItem;
+  const firstSent=q.exp.split("。")[0]+"。";
+  let body;
+  if(g==="best") body=`<div class="fb-tip">✓ <b>ワンポイント:</b> ${firstSent}</div><div class="fb-pr"><b>原則:</b> ${q.pr}</div>`;
+  else if(g==="ok") body=`<div class="fb-exp">${q.exp}</div><div class="fb-pr"><b>原則:</b> ${q.pr}</div>`;
+  else body=`<div class="fb-exp">${q.exp}</div>${LEARN[q.title]?`<div class="fb-learn"><b>🧭 思考手順:</b> ${LEARN[q.title]}</div>`:""}<div class="fb-pr"><b>原則:</b> ${q.pr}</div>`;
+  const fb=el("fb");
+  const sign=info.pts>0?"+":"";
+  fb.innerHTML=`
+    <div class="fb-banner b-${info.cls}"><span>${g==="best"?"⭐ ":""}あなたの選択:${info.jp}</span><span>${sign}${info.pts} pt</span></div>
+    ${body}
+    ${q.spot?`<div class="k-wrap">${rangeGridHTML(q.spot)}</div>`:knowledgeHTML(q.title+q.situ.join("")+q.exp+q.pr,q.cat)}
+    ${injected?`<div class="fb-inject">📥 この分野(${groupLabel(it.node)})の前提知識カード${injected}枚を次に出題します</div>`:""}`;
+  fb.classList.add("show");
+  fb.scrollIntoView({behavior:"smooth",block:"start"});
+  renderChips();
+  saveState();
+}
+
+// --- 知識カード ---
+function renderKnow(it){
+  const c=it.ref;
+  const opts=shuffle(c.o.map(o=>({...o})));
+  el("content").innerHTML=`
+    <div class="qmeta">
+      <span class="tag">🧠 知識</span>
+      <span class="tag">${groupLabel(it.node)}</span>
+      <span class="tag">箱${it.box}${it.box>=4?" ✦":""}</span>
+    </div>
+    <div class="qtext">${c.q}${handVisualHTML(c.q)}</div>
+    ${glossHTML(c.q+c.e+c.o.map(o=>o.t).join(""))}
+    <div class="fb" id="fb"></div>`;
+  const abar=el("abar");
+  abar.classList.remove("answered");
+  const btns=opts.map(o=>`<button class="opt ${o.ok?"correct":""}">${o.t}</button>`).join("");
+  abar.innerHTML=c.two?`<div class="opts-grid2">${btns}</div>`:btns;
+  abar.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answerKnow(b,it));
+}
+function answerKnow(btn,it){
+  if(state.locked)return; state.locked=true;
+  const c=it.ref;
+  const good=btn.classList.contains("correct");
+  state.answered++; state.lastIdx=state.current;
+  let gained=0;
+  if(good){state.streak++; gained=10+Math.min(state.streak,10)*2; state.xp+=gained; it.box=Math.min(5,it.box+1);}
+  else {state.streak=0; it.box=1;}
+  const abar=el("abar");
+  abar.classList.add("answered");
+  abar.querySelectorAll(".opt").forEach(b=>{b.classList.add("revealed"); b.onclick=null;});
+  if(!good)btn.classList.add("pickedwrong");
+  abar.insertAdjacentHTML("beforeend",'<button class="nextbtn" id="nextbtn">次へ ▶</button>');
+  el("nextbtn").onclick=nextItem;
+  const fb=el("fb");
+  fb.innerHTML=`
+    <div class="fb-banner b-${good?"best":"blunder"}"><span>${good?"✓ 正解!":"✗ 不正解(箱1に戻ります)"}</span><span>${good?`+${gained} XP`:"—"}</span></div>
+    ${good?`<div class="fb-tip">✓ <b>チェック:</b> ${c.e.split("。")[0]}。</div>`:`<div class="fb-exp">${c.e}</div>`}
+    ${knowledgeHTML(c.q+" "+c.e,c.d)}`;
+  fb.classList.add("show");
+  fb.scrollIntoView({behavior:"smooth",block:"start"});
+  renderChips();
+  saveState();
+}
+
+// --- レンジ表(2変数エクスプローラ:固定変数+フェーダー) ---
+const POS_ORDER=["UTG","HJ","CO","BTN","SB","BBコール"];
+const RANGES2={
+ "UTG":{d:"9人テーブルの先頭。後ろに8人いるため最も狭い。",
+   5:"22+, A2s+, A7o+, K9s+, KQo, QTs+, JTs",
+   10:"55+, A9s+, AJo+, KQs",
+   15:"77+, ATs+, AJo+, KQs"},
+ "HJ":{d:"ボタンの2つ手前。中盤ポジション。",
+   5:"22+, A2s+, A4o+, K7s+, KTo+, Q9s+, QJo, JTs, T9s",
+   10:"44+, A7s+, A9o+, KTs+, KQo, QJs",
+   15:"66+, A9s+, ATo+, KQs, KJs"},
+ "CO":{d:"ボタンの1つ手前。ここから一気に広がる。",
+   5:"22+, A2+, K5s+, K9o+, Q8s+, QTo+, J8s+, JTo, T8s+, 98s",
+   10:"22+, A2s+, A8o+, K9s+, KJo+, QTs+, JTs",
+   15:"55+, A7s+, ATo+, KTs+, KQo, QJs"},
+ "BTN":{d:"残る相手はブラインドの2人だけ。",
+   5:"22+, A2+, K2s+, K5o+, Q4s+, Q8o+, J6s+, J9o+, T7s+, T9o, 96s+, 98o, 86s+, 76s",
+   10:"22+, A2+, K5s+, K9o+, Q8s+, QTo+, J8s+, JTo, T8s+, 98s, 87s",
+   15:"22+, A2s+, A8o+, K8s+, KJo+, Q9s+, QJo, J9s+, T9s, 98s"},
+ "SB":{d:"相手はBB1人のみ。プッシュレンジは最も広い。",
+   5:"22+, A2+, K2+, Q2s+, Q4o+, J2s+, J7o+, T4s+, T7o+, 95s+, 97o+, 85s+, 87o, 75s+, 76o, 65s",
+   10:"22+, A2+, K2s+, K4o+, Q2s+, Q6o+, J4s+, J8o+, T6s+, T8o+, 96s+, 98o, 86s+, 76s, 65s",
+   15:"22+, A2+, K4s+, K8o+, Q6s+, Q9o+, J7s+, J9o+, T7s+, T9o, 97s+, 87s"},
+ "BBコール":{d:"SBのオールインに対するBBのコール目安。プッシュ側よりずっと狭い。", act:"コール",
+   5:"22+, A2+, K2s+, K5o+, Q5s+, Q9o+, J7s+, J9o+, T8s+, T9o, 98s",
+   10:"22+, A2s+, A2o+, K8s+, KTo+, Q9s+, QJo, J9s+, T9s",
+   15:"55+, A7s+, ATo+, KTs+, KQo, QJs"}
+};
+function gridRawHTML(rangeStr, label, action){
+  const set=expandRange(rangeStr);
+  let combos=0; set.forEach(h=>{combos+=h.length===2?6:(h[2]==="s"?4:12);});
+  const pct=Math.round(100*combos/1326);
+  let cells="";
+  for(let i=0;i<13;i++)for(let j=0;j<13;j++){
+    let key;
+    if(i===j) key=RANKS[i]+RANKS[j];
+    else if(i<j) key=RANKS[i]+RANKS[j]+"s";
+    else key=RANKS[j]+RANKS[i]+"o";
+    cells+=`<span class="rc ${i===j?"pair":""} ${set.has(key)?"on":""}">${key}</span>`;
+  }
+  return `<div class="kt-title">📊 ${label}(緑=${action}、全体の約${pct}%)</div><div class="rgrid">${cells}</div>`;
+}
+function chartGrid(){
+  const r=RANGES2[state.cpos][state.cstk];
+  const action=RANGES2[state.cpos].act||"プッシュ";
+  return gridRawHTML(r, `${state.cpos} ${state.cstk}bb`, action);
+}
+function renderChartView(){
+  el("abar").innerHTML="";
+  const fixedPos = state.cfix==="pos";
+  el("content").innerHTML=`
+    <div class="qmeta"><span class="tag">レンジ表エクスプローラ(簡略ナッシュ近似)</span></div>
+    <div class="spot-sel">
+      <button class="cat ${fixedPos?"active":""}" data-tg="pos">ポジションを固定</button>
+      <button class="cat ${!fixedPos?"active":""}" data-tg="stack">スタックを固定</button>
+    </div>
+    ${fixedPos
+      ? `<div class="spot-sel">${POS_ORDER.map(p=>`<button class="cat ${p===state.cpos?"active":""}" data-p="${p}">${p}</button>`).join("")}</div>
+         <div class="fader-row"><span class="fader-lbl">スタック</span>
+           <input type="range" class="fader" id="fader" min="5" max="15" step="5" value="${state.cstk}">
+           <span class="fader-val" id="fval">${state.cstk}bb</span></div>`
+      : `<div class="spot-sel">${[5,10,15].map(s=>`<button class="cat ${s===state.cstk?"active":""}" data-s="${s}">${s}bb</button>`).join("")}</div>
+         <div class="fader-row"><span class="fader-lbl">ポジション</span>
+           <input type="range" class="fader" id="fader" min="0" max="5" step="1" value="${POS_ORDER.indexOf(state.cpos)}">
+           <span class="fader-val" id="fval">${state.cpos}</span></div>`}
+    <div class="rdesc" id="cdesc">${RANGES2[state.cpos].d} フェーダーで${fixedPos?"スタック量":"ポジション"}だけを動かして、緑の伸縮を観察してください。</div>
+    <div id="cgrid">${chartGrid()}</div>
+    <div class="rnote">大原則:①スタックが浅いほど広がる ②後ろに残る人数が少ないほど広がる ③コールはプッシュよりずっと狭い。<br>この表は暗記用の簡略近似(±1〜2ハンド許容)。正確なナッシュ表はHoldemResources Calculator、SnapShove、GTO Wizard(無料枠)で確認できます。</div>`;
+  const c=el("content");
+  c.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{state.cfix=b.dataset.tg; renderChartView();});
+  c.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.cpos=b.dataset.p; renderChartView();});
+  c.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{state.cstk=+b.dataset.s; renderChartView();});
+  const f=el("fader");
+  if(f) f.oninput=()=>{
+    if(fixedPos){ state.cstk=+f.value; el("fval").textContent=state.cstk+"bb"; }
+    else { state.cpos=POS_ORDER[+f.value]; el("fval").textContent=state.cpos; }
+    el("cdesc").textContent=RANGES2[state.cpos].d+" フェーダーで"+(fixedPos?"スタック量":"ポジション")+"だけを動かして、緑の伸縮を観察してください。";
+    el("cgrid").innerHTML=chartGrid();
+  };
+  el("content").scrollTop=0;
+}
+
+// --- 成績 ---
+function rankTitle(r){
+  if(r<1100)return "見習い"; if(r<1250)return "アマチュア";
+  if(r<1400)return "レギュラー"; if(r<1550)return "セミプロ"; return "クラッシャー";
+}
+function renderStatsView(){
+  el("abar").innerHTML="";
+  const bars=GROUP_LIST.map(([g,label])=>{
+    const its=ITEMS.filter(it=>groupOf(it.node)===g);
+    if(!its.length)return "";
+    const mstr=its.filter(it=>it.box>=4).length;
+    const pct=Math.round(100*mstr/its.length);
+    return `<div class="bar-row"><span class="bl">${label}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="bn">${mstr}/${its.length}</span></div>`;
+  }).join("");
+  const c=state.counts;
+  el("content").innerHTML=`
+    <div class="stats">
+      <h2>分野別マスター状況(箱4以上)</h2>
+      <div class="rank-line">
+        <div class="rank-title">${rankTitle(state.rating)}</div>
+        <div class="rank-sub">回答数 ${state.answered}・優先キュー ${state.priority.length}</div>
+      </div>
+      ${bars}
+      <div class="counts">
+        <span class="cnt c-best">最善 ${c.best}</span><span class="cnt c-ok">許容 ${c.ok}</span>
+        <span class="cnt c-miss">ミス ${c.miss}</span><span class="cnt c-blunder">大ミス ${c.blunder}</span>
+      </div>
+    </div>
+    <footer>
+      🎯 特訓(ミックス):知識カード68枚と判断問題122問が1本のキューに流れます。分野の知識習熟度が低いうちは暗記中心、上がるほど判断問題が増加。判断ミス時はその分野の前提知識カードが割り込み出題(📥)。<br>
+      採点:判断=最善+15/許容+5/ミス−10/大ミス−25(レート)、知識=正解でXP+コンボ。ライトナー式(箱1〜5)。キワ問題はミス判定なし。<br>💾 進捗保存: ${CAN_SAVE?"<b>有効</b>(この端末に自動保存されます)":"この環境では無効(セッション内のみ。端末保存ファイルやホスティング版では自動で有効になります)"} ${CAN_SAVE?`<button class="cat" id="rsbtn">進捗をリセット</button>`:""}
+    </footer>`;
+  const rb=el("rsbtn");
+  if(rb){ rb.onclick=()=>{ if(rb.dataset.arm){ resetSave(); } else { rb.dataset.arm="1"; rb.textContent="本当にリセット? もう一度タップ"; } }; }
+  el("content").scrollTop=0;
+}
+function renderChips(){
+  el("rating").textContent=state.rating;
+  el("xp").textContent=state.xp;
+  el("streak").textContent=state.streak;
+}
+
+// --- ナビ ---
+function renderNav(){
+  const nav=el("catnav");
+  const items=[["mix","🎯 特訓"],["judge","🃏 何切る"],["know","🧠 暗記"],["chart","📊 表"],["stats","📈 成績"]];
+  nav.innerHTML=items.map(([k,v])=>`<button class="cat ${state.mode===k?"active":""}" data-m="${k}">${v}</button>`).join("");
+  nav.querySelectorAll(".cat").forEach(b=>b.onclick=()=>{
+    state.mode=b.dataset.m; renderNav();
+    if(state.mode==="chart") renderChartView();
+    else if(state.mode==="stats") renderStatsView();
+    else nextItem();
+  });
+}
+
+// ===== 進捗の永続化(対応環境ではlocalStorageに自動保存) =====
+const SAVE_KEY="poker-dojo-v1";
+function storageOK(){ try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; }catch(e){ return false; } }
+const CAN_SAVE=storageOK();
+function itemKey(it){ return it.type==="judge" ? "j:"+it.ref.title : "k:"+it.ref.q; }
+function saveState(){
+  if(!CAN_SAVE) return;
+  try{
+    const boxes={};
+    ITEMS.forEach(it=>{ if(it.box>1) boxes[itemKey(it)]=it.box; });
+    localStorage.setItem(SAVE_KEY, JSON.stringify({r:state.rating,x:state.xp,a:state.answered,c:state.counts,b:boxes}));
+  }catch(e){}
+}
+function loadState(){
+  if(!CAN_SAVE) return;
+  try{
+    const d=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");
+    if(!d) return;
+    if(typeof d.r==="number") state.rating=d.r;
+    if(typeof d.x==="number") state.xp=d.x;
+    if(typeof d.a==="number") state.answered=d.a;
+    if(d.c) state.counts=d.c;
+    if(d.b) ITEMS.forEach(it=>{ const v=d.b[itemKey(it)]; if(v>=1&&v<=5) it.box=v; });
+  }catch(e){}
+}
+function resetSave(){ if(CAN_SAVE){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} } location.reload(); }
+loadState();
+
+renderNav(); renderChips(); nextItem();
+
+</script>
+<script>
+if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
+  addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
