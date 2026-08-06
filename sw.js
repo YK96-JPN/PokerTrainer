@@ -1,6 +1,6 @@
 // ポーカー道場 Service Worker
 // 更新を配る時は CACHE のバージョン番号を上げること(例: v1 → v2)
-const CACHE = "poker-dojo-pwa-v6";
+const CACHE = "poker-dojo-pwa-v16";
 const ASSETS = [
   "./",
   "./index.html",
